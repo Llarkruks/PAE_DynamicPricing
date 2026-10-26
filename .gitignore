@@ -1,0 +1,71 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Data Files (Evitar subir datasets grandes)
+*.csv
+*.xlsx
+*.xls
+!FCB_DASHBOARD_INPUT_TEMPLATE_excel_es.csv
+!dataset_v2_EQUIPO_FINAL.csv
+!dataset_v2_XGBOOST_encoded_FINAL.csv
+
+# Permitir archivos de configuración y modelos necesarios
+!model_features.json
+!*.pkl
+
+# Documentación y otros
+*.pdf
+!README.md
+!requirements.txt
+
+# Específico del proyecto local
+.engram/
+.skills/
+spec_output.txt
+feature_importance_engraving.txt
+__pycache__/
+*.py[cod]
