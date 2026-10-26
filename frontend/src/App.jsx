@@ -1,24 +1,38 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes
+} from 'react-router-dom';
+
 import Sidebar from './Sidebar';
 import Simulator from './pages/Simulator';
-import Analytics from './pages/Analytics';
+import './App.css';
 
-function App() {
+export default function App() {
   return (
-    <Router>
-      <div className="flex min-h-screen font-['Inter'] text-on-surface relative overflow-hidden bg-transparent">
+    <BrowserRouter>
+      <div className="stadium-app">
         <Sidebar />
-        <div className="relative z-10 w-full flex">
-          <Routes>
-            <Route path="/" element={<Navigate to="/simulator" replace />} />
-            <Route path="/simulator" element={<Simulator />} />
-            <Route path="/analytics" element={<Analytics />} />
-          </Routes>
-        </div>
+
+        <Routes>
+          <Route
+            path="/"
+            element={<Navigate to="/simulator" replace />}
+          />
+
+          <Route
+            path="/simulator"
+            element={<Simulator />}
+          />
+
+          <Route
+            path="*"
+            element={<Navigate to="/simulator" replace />}
+          />
+        </Routes>
       </div>
-    </Router>
+    </BrowserRouter>
   );
 }
-
-export default App;

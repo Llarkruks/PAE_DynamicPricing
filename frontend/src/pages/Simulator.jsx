@@ -1,380 +1,1184 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceDot } from 'recharts';
 
-const Simulator = () => {
-  const [importance, setImportance] = useState(7);
-  const [days, setDays] = useState(40);
-  const [occupancy, setOccupancy] = useState(62);
-  const [time, setTime] = useState(80);
-  const [isDerby, setIsDerby] = useState(true);
-  const [isHoliday, setIsHoliday] = useState(false);
-  const [competition, setCompetition] = useState("LaLiga");
-  const [phase, setPhase] = useState("Regular Season");
-  
-  const [configData, setConfigData] = useState({ areas: {}, competitions: {} });
-  const [selectedArea, setSelectedArea] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState("");
-  const [selectedComp, setSelectedComp] = useState("");
-  const [selectedPhase, setSelectedPhase] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(null);
+import {
+  AreaChart,
+  Area,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from 'recharts';
 
-  useEffect(() => {
-    // Fetch real config from the backend database
-    const fetchConfig = async () => {
-      try {
-        const response = await axios.get('http://localhost:8000/api/config');
-        setConfigData(response.data);
-        
-        const areas = Object.keys(response.data.areas || {});
-        if (areas.length > 0) {
-          setSelectedArea(areas[0]);
-          setSelectedLevel(response.data.areas[areas[0]][0]);
-        }
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-        const comps = Object.keys(response.data.competitions || {});
-        if (comps.length > 0) {
-          setSelectedComp(comps[0]);
-          setSelectedPhase(response.data.competitions[comps[0]][0]);
-        }
-      } catch (err) {
-        console.error("Error fetching config", err);
-      }
-    };
-    fetchConfig();
-  }, []);
+const INITIAL = {
+  importance: 7,
+  days: 40,
+  occupancy: 62,
+  isDerby: false,
+  isHoliday: false
+};
 
-  const handleAreaChange = (e) => {
-    const area = e.target.value;
-    setSelectedArea(area);
-    if (configData.areas[area] && configData.areas[area].length > 0) {
-      setSelectedLevel(configData.areas[area][0]);
-    }
-  };
+const eur = (value, digits = 2) =>
+  value !== null &&
+  value !== undefined &&
+  Number.isFinite(Number(value))
+    ? new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      }).format(Number(value))
+    : '—';
 
-  const handleCompChange = (e) => {
-    const comp = e.target.value;
-    setSelectedComp(comp);
-    if (configData.competitions[comp] && configData.competitions[comp].length > 0) {
-      setSelectedPhase(configData.competitions[comp][0]);
-    }
-  };
+const num = (value, digits = 1) =>
+  value !== null &&
+  value !== undefined &&
+  Number.isFinite(Number(value))
+    ? new Intl.NumberFormat('es-ES', {
+        maximumFractionDigits: digits
+      }).format(Number(value))
+    : '—';
 
-  const runSimulation = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post('http://localhost:8000/predict-price', {
-        item_area: selectedArea,
-        item_level: selectedLevel,
-        days_to_match: parseInt(days),
-        occupancy_rate: occupancy / 100,
-        match_importance: parseInt(importance, 10),
-        competition_type: selectedComp,
-        competition_phase: selectedPhase,
-        is_derby: isDerby,
-        is_holiday_period: isHoliday
-      });
-      setResults(response.data);
-    } catch (error) {
-      console.error("Error executing simulation", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+// ========================================
+// COMPONENTE SLIDER
+// ========================================
+
+function Slider({ label, value, onChange, min, max, suffix = '' }) {
+  return (
+    <label className="field slider-field">
+      <span className="field-header">
+        <span>{label}</span>
+        <strong>{value}{suffix}</strong>
+      </span>
+
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={e => onChange(Number(e.target.value))}
+      />
+
+      <span className="range-ends">
+        <span>{min}{suffix}</span>
+        <span>{max}{suffix}</span>
+      </span>
+    </label>
+  );
+}
+
+// ========================================
+// COMPONENTE METRICA
+// ========================================
+
+function Metric({ label, value, help, explanation, accent = false }) {
+  const [open, setOpen] = useState(false);
 
   return (
-    <main className="ml-[260px] flex-1 min-h-screen bg-transparent p-8">
-      <header className="flex justify-between items-center mb-10">
+    <div className={`metric ${accent ? 'metric-accent' : ''}`}>
+      <div className="metric-header">
+        <span>{label}</span>
+
+        <button
+          type="button"
+          className="metric-info-button"
+          aria-label={`Información sobre ${label}`}
+          aria-expanded={open}
+          onClick={() => setOpen(v => !v)}
+        >
+          <span className="material-symbols-outlined">info</span>
+        </button>
+      </div>
+
+      <strong>{value}</strong>
+      <small>{help}</small>
+
+      {open && (
+        <div className="metric-explanation">
+          {explanation}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ========================================
+// SIMULADOR
+// ========================================
+
+export default function Simulator() {
+
+  // Configuracion recibida de FastAPI
+  const [config, setConfig] = useState({
+    areas: {},
+    competitions: {}
+  });
+
+  const [selectedArea, setSelectedArea] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState('');
+  const [selectedComp, setSelectedComp] = useState('');
+  const [selectedPhase, setSelectedPhase] = useState('');
+
+  // Parametros
+  const [importance, setImportance] = useState(INITIAL.importance);
+  const [days, setDays] = useState(INITIAL.days);
+  const [occupancy, setOccupancy] = useState(INITIAL.occupancy);
+  const [isDerby, setIsDerby] = useState(INITIAL.isDerby);
+  const [isHoliday, setIsHoliday] = useState(INITIAL.isHoliday);
+
+  // Estado de la aplicacion
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [configError, setConfigError] = useState('');
+  const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Resultados
+  const [results, setResults] = useState(null);
+  const [resultSignature, setResultSignature] = useState(null);
+  const [chartMode, setChartMode] = useState('Ingresos');
+
+  // Revision humana, solamente local
+  const [review, setReview] = useState('Sin revisar');
+
+  // Evita utilizar respuestas de peticiones antiguas
+  const requestId = useRef(0);
+
+  // ========================================
+  // CARGAR CONFIGURACION
+  // ========================================
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchConfig() {
+      setLoadingConfig(true);
+      setConfigError('');
+
+      try {
+        const { data } = await axios.get(
+          `${API}/api/config`,
+          { timeout: 20000 }
+        );
+
+        if (!active) return;
+
+        const areas = data?.areas || {};
+        const competitions = data?.competitions || {};
+
+        const firstArea = Object.keys(areas)[0] || '';
+        const firstComp = Object.keys(competitions)[0] || '';
+
+        setConfig({ areas, competitions });
+        setSelectedArea(firstArea);
+        setSelectedLevel(String(areas[firstArea]?.[0] ?? ''));
+        setSelectedComp(firstComp);
+        setSelectedPhase(String(competitions[firstComp]?.[0] ?? ''));
+
+      } catch (err) {
+        if (!active) return;
+
+        console.error('Error de configuración:', err);
+        setConfigError(
+          'No se pudo conectar con FastAPI. Comprueba que python main.py esté ejecutándose.'
+        );
+      } finally {
+        if (active) setLoadingConfig(false);
+      }
+    }
+
+    fetchConfig();
+
+    return () => {
+      active = false;
+    };
+  }, [retryCount]);
+
+  // ========================================
+  // CAMBIO DE ZONA Y COMPETICION
+  // ========================================
+
+  const changeArea = value => {
+    setSelectedArea(value);
+    setSelectedLevel(String(config.areas[value]?.[0] ?? ''));
+  };
+
+  const changeCompetition = value => {
+    setSelectedComp(value);
+    setSelectedPhase(String(config.competitions[value]?.[0] ?? ''));
+  };
+
+  // ========================================
+  // DETECTAR CAMBIOS EN EL ESCENARIO
+  // ========================================
+
+  const scenarioSignature = JSON.stringify({
+    selectedArea,
+    selectedLevel,
+    selectedComp,
+    selectedPhase,
+    importance,
+    days,
+    occupancy,
+    isDerby,
+    isHoliday
+  });
+
+  const latestSignature = useRef(scenarioSignature);
+  latestSignature.current = scenarioSignature;
+
+  const isOutdated =
+    results !== null &&
+    resultSignature !== scenarioSignature;
+
+  const currentResults = isOutdated ? null : results;
+
+  // Asociamos la revision a una simulacion concreta
+  const [reviewSignature, setReviewSignature] = useState(null);
+
+  const currentReview =
+    currentResults && reviewSignature === scenarioSignature
+      ? review
+      : 'Sin revisar';
+
+  // ========================================
+  // RESTABLECER
+  // ========================================
+
+  const resetParameters = () => {
+    requestId.current += 1;
+
+    const firstArea = Object.keys(config.areas)[0] || '';
+    const firstComp = Object.keys(config.competitions)[0] || '';
+
+    setSelectedArea(firstArea);
+    setSelectedLevel(String(config.areas[firstArea]?.[0] ?? ''));
+    setSelectedComp(firstComp);
+    setSelectedPhase(String(config.competitions[firstComp]?.[0] ?? ''));
+
+    setImportance(INITIAL.importance);
+    setDays(INITIAL.days);
+    setOccupancy(INITIAL.occupancy);
+    setIsDerby(false);
+    setIsHoliday(false);
+
+    setResults(null);
+    setResultSignature(null);
+    setReview('Sin revisar');
+    setReviewSignature(null);
+    setChartMode('Ingresos');
+    setError('');
+    setLoading(false);
+  };
+
+  // ========================================
+  // EJECUTAR SIMULACION
+  // ========================================
+
+  const runSimulation = async () => {
+    if (
+      !selectedArea ||
+      !selectedLevel ||
+      !selectedComp ||
+      !selectedPhase
+    ) {
+      setError('Selecciona una zona, nivel, competición y fase.');
+      return;
+    }
+
+    const thisRequest = ++requestId.current;
+    const submittedSignature = scenarioSignature;
+
+    setLoading(true);
+    setError('');
+    setResults(null);
+    setResultSignature(null);
+    setReview('Sin revisar');
+    setReviewSignature(null);
+
+    try {
+      const { data } = await axios.post(
+        `${API}/predict-price`,
+        {
+          item_area: selectedArea,
+          item_level: String(selectedLevel),
+          days_to_match: days,
+          occupancy_rate: occupancy / 100,
+          match_importance: importance,
+          competition_type: selectedComp,
+          competition_phase: selectedPhase,
+          is_derby: isDerby,
+          is_holiday_period: isHoliday
+        },
+        { timeout: 90000 }
+      );
+
+      if (thisRequest !== requestId.current) return;
+
+      setResults(data);
+      setResultSignature(submittedSignature);
+
+      if (submittedSignature !== latestSignature.current) {
+        setError(
+          'Los parámetros cambiaron durante el cálculo. Ejecuta una nueva simulación.'
+        );
+      }
+
+    } catch (err) {
+      if (thisRequest !== requestId.current) return;
+
+      console.error('Error ejecutando simulación:', err);
+
+      setError(
+        err?.response
+          ? `La API devolvió el error ${err.response.status}. Revisa el backend.`
+          : 'No se pudo conectar con FastAPI.'
+      );
+
+    } finally {
+      if (thisRequest === requestId.current) {
+        setLoading(false);
+      }
+    }
+  };
+
+  // ========================================
+  // DATOS DEL GRAFICO
+  // ========================================
+
+  const chartData = useMemo(() => {
+    if (!Array.isArray(currentResults?.sweep_data)) return [];
+
+    return currentResults.sweep_data
+      .map(point => {
+        const precio = Number(point.Precio);
+        const ingresos = Number(point.Ingresos);
+
+        const demanda =
+          point.Demanda !== null &&
+          point.Demanda !== undefined &&
+          Number.isFinite(Number(point.Demanda))
+            ? Number(point.Demanda)
+            : precio > 0
+              ? ingresos / precio
+              : 0;
+
+        return {
+          ...point,
+          Precio: precio,
+          Ingresos: ingresos,
+          Demanda: demanda
+        };
+      })
+      .filter(point =>
+        Number.isFinite(point.Precio) &&
+        Number.isFinite(point.Ingresos) &&
+        Number.isFinite(point.Demanda)
+      );
+  }, [currentResults]);
+
+  const changePercent =
+    currentResults && Number(currentResults.base_price) > 0
+      ? (
+          Number(currentResults.suggested_optimal_price) /
+          Number(currentResults.base_price) - 1
+        ) * 100
+      : null;
+
+  const canSimulate = Boolean(
+    !loadingConfig &&
+    !loading &&
+    selectedArea &&
+    selectedLevel &&
+    selectedComp &&
+    selectedPhase
+  );
+
+  const chartColor =
+    chartMode === 'Ingresos' ? '#a39cfb' : '#5ee1b3';
+
+  // ========================================
+  // REVISION HUMANA V4
+  // ========================================
+
+  const registerReview = status => {
+    if (!currentResults) return;
+
+    setReview(status);
+    setReviewSignature(scenarioSignature);
+  };
+
+  const reviewCompleted =
+    currentReview === 'Revisión registrada localmente';
+
+  const reviewPending =
+    currentReview === 'Pendiente de revisión';
+
+  // ========================================
+  // INTERFAZ
+  // ========================================
+
+  return (
+    <main className="sim-main">
+
+      {/* CABECERA */}
+
+      <header className="sim-header">
         <div>
-          <h2 className="font-headline-lg text-headline-lg text-primary tracking-tight">Simulador de Matchday</h2>
-          <p className="font-body-md text-label-md text-on-surface-variant">Motor predictivo de demanda y ticketing para estadios.</p>
-        </div>
-        <div className="flex gap-4">
-          <button 
-            onClick={runSimulation}
-            disabled={loading}
-            className={`px-6 py-2 bg-secondary-container text-white rounded-lg font-label-md shadow-lg neon-glow-pink hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2 ${loading ? 'animate-pulse' : ''}`}>
-            {loading && <span className="material-symbols-outlined animate-spin text-sm" style={{ fontVariationSettings: "'wght' 600" }}>sync</span>}
-            {loading ? 'Calculando Escenarios...' : 'Ejecutar Simulación'}
-          </button>
-        </div>
-      </header>
-
-      <div className="grid grid-cols-12 gap-6">
-        <section className="col-span-5 space-y-6 animate-fade-in-up opacity-0">
-          <div className="glass-panel p-6 rounded-2xl">
-            <div className="flex items-center gap-2 mb-6 text-primary-fixed">
-              <span className="material-symbols-outlined">settings_input_component</span>
-              <h3 className="font-headline-md text-label-md uppercase tracking-widest">Parámetros de Entrada</h3>
-            </div>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] text-on-surface-variant uppercase font-bold">Zona</label>
-                  <select 
-                    className="w-full bg-surface-container border border-white/10 rounded-lg py-2 px-3 text-on-surface focus:ring-primary focus:border-primary"
-                    value={selectedArea}
-                    onChange={handleAreaChange}
-                  >
-                    {Object.keys(configData.areas || {}).length === 0 && <option>Cargando Zonas...</option>}
-                    {Object.keys(configData.areas || {}).map(area => (
-                      <option key={area} value={area}>{area}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] text-on-surface-variant uppercase font-bold">Nivel</label>
-                  <select 
-                    className="w-full bg-surface-container border border-white/10 rounded-lg py-2 px-3 text-on-surface focus:ring-primary focus:border-primary"
-                    value={selectedLevel}
-                    onChange={(e) => setSelectedLevel(e.target.value)}
-                  >
-                    {!(configData.areas && configData.areas[selectedArea]) && <option>Cargando Niveles...</option>}
-                    {configData.areas?.[selectedArea]?.map(level => (
-                      <option key={level} value={level}>{level}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] text-on-surface-variant uppercase font-bold">Competición</label>
-                  <select 
-                    className="w-full bg-surface-container border border-white/10 rounded-lg py-2 px-3 text-on-surface focus:ring-primary focus:border-primary"
-                    value={selectedComp}
-                    onChange={handleCompChange}
-                  >
-                    {Object.keys(configData.competitions || {}).length === 0 && <option>Cargando...</option>}
-                    {Object.keys(configData.competitions || {}).map(comp => (
-                      <option key={comp} value={comp}>{comp}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] text-on-surface-variant uppercase font-bold">Fase</label>
-                  <select 
-                    className="w-full bg-surface-container border border-white/10 rounded-lg py-2 px-3 text-on-surface focus:ring-primary focus:border-primary"
-                    value={selectedPhase}
-                    onChange={(e) => setSelectedPhase(e.target.value)}
-                  >
-                    {!(configData.competitions && configData.competitions[selectedComp]) && <option>Cargando...</option>}
-                    {configData.competitions?.[selectedComp]?.map(phase => (
-                      <option key={phase} value={phase}>{phase}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <label className="text-[10px] text-on-surface-variant uppercase font-bold">Importancia del Partido</label>
-                    <span className={`text-label-sm ${importance > 8 ? 'text-secondary' : 'text-primary'}`}>{importance}/10</span>
-                  </div>
-                  <input className="w-full" type="range" min="1" max="10" step="1" value={importance} onChange={(e) => setImportance(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <label className="text-[10px] text-on-surface-variant uppercase font-bold">Días para el evento</label>
-                    <span className="text-primary text-label-sm">{days} Días</span>
-                  </div>
-                  <input className="w-full" type="range" max="150" value={days} onChange={(e) => setDays(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <label className="text-[10px] text-on-surface-variant uppercase font-bold">Ocupación Proyectada</label>
-                    <span className={`text-label-sm ${occupancy > 80 ? 'text-secondary' : 'text-primary'}`}>{occupancy}%</span>
-                  </div>
-                  <input className="w-full" type="range" value={occupancy} onChange={(e) => setOccupancy(e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <label className="text-[10px] text-on-surface-variant uppercase font-bold">Hora de Inicio</label>
-                    <span className="text-primary text-label-sm">{Math.floor(12 + (time / 100) * 11)}:00</span>
-                  </div>
-                  <input className="w-full" type="range" value={time} onChange={(e) => setTime(e.target.value)} />
-                </div>
-              </div>
-
-              <div className="flex gap-6 py-4 border-t border-white/5">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input className="sr-only peer" type="checkbox" checked={isDerby} onChange={(e) => setIsDerby(e.target.checked)} />
-                    <div className="w-10 h-5 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
-                  </div>
-                  <span className="text-label-sm font-label-sm text-on-surface-variant group-hover:text-on-surface">Derbi Local</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="relative">
-                    <input className="sr-only peer" type="checkbox" checked={isHoliday} onChange={(e) => setIsHoliday(e.target.checked)} />
-                    <div className="w-10 h-5 bg-surface-container-highest rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
-                  </div>
-                  <span className="text-label-sm font-label-sm text-on-surface-variant group-hover:text-on-surface">Festivo</span>
-                </label>
-              </div>
-            </div>
+          <div className="eyebrow">
+            <span className="eyebrow-line" />
+            SIMULATION WORKSPACE / 01
           </div>
 
-          <div className="relative overflow-hidden rounded-2xl h-48 group">
-            <img alt="Simulation Preview" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9I3vHXbiTeWO7ThA2Td9LOSuK4XpH3gtn2PGD-G3SaczAeJwcw2rMkC8yGP0xi_W8EcGPzOsbuZqOLXlWXcCRVQ5HeHRWOqMYtNbdk-6tn1yEQdJUqlaEfTbbhVmbE2Na7kPO2RU0YHVc7QrbrnghTBIa5Mnh6A2ziwY6M_JlTpxt0jU5QE2loDtSUY3OUhh7ICWRGv0RavoPp-ESnYIE-ghTR0JTIjdZXm9YMQAtn1v7E1QIQ_5CYTti2VluypGjyUajF0lDsok" />
-            <div className="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent flex flex-col justify-end p-6">
-              <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1">Visualización de Base</span>
-              <h4 className="font-headline-md text-label-md">Vista Previa del Estadio Histórica</h4>
+          <h1>
+            Smart Stadium <em>Pricing</em>
+          </h1>
+
+          <p>
+            Explora escenarios, estima ingresos y revisa recomendaciones
+            antes de cualquier decisión comercial.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="primary-button"
+          disabled={!canSimulate}
+          onClick={runSimulation}
+        >
+          <span className="material-symbols-outlined">
+            {loading ? 'hourglass_top' : 'auto_graph'}
+          </span>
+          {loading ? 'Calculando...' : 'Ejecutar simulación'}
+        </button>
+      </header>
+
+      {/* AVISOS */}
+
+      {configError && (
+        <div className="alert" role="alert">
+          {configError}
+          <button
+            type="button"
+            onClick={() => setRetryCount(n => n + 1)}
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <div className="alert" role="alert">
+          {error}
+        </div>
+      )}
+
+      {isOutdated && (
+        <div className="stale-warning" role="status">
+          <span className="material-symbols-outlined">
+            warning
+          </span>
+
+          <div>
+            <strong>Parámetros modificados</strong>
+            <p>
+              Los resultados anteriores ya no corresponden al escenario
+              actual. Ejecuta una nueva simulación.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            disabled={!canSimulate}
+            onClick={runSimulation}
+          >
+            Recalcular
+          </button>
+        </div>
+      )}
+
+      <div className="sim-layout">
+
+        {/* COLUMNA IZQUIERDA */}
+
+        <section className="panel input-panel">
+
+          <div className="panel-heading">
+            <div>
+              <span className="section-kicker">
+                01 / CONFIGURACIÓN
+              </span>
+              <h2>Contexto del evento</h2>
+              <p>Define un escenario hipotético para el modelo.</p>
             </div>
+
+            <button
+              type="button"
+              className="reset-button"
+              onClick={resetParameters}
+              disabled={loadingConfig}
+              title="Restablecer parámetros"
+            >
+              <span className="material-symbols-outlined">
+                restart_alt
+              </span>
+            </button>
+          </div>
+
+          <div className="form-grid">
+
+            <label className="field">
+              <span>Zona del estadio</span>
+              <select
+                value={selectedArea}
+                disabled={loadingConfig}
+                onChange={e => changeArea(e.target.value)}
+              >
+                {!selectedArea && (
+                  <option value="">Selecciona una zona</option>
+                )}
+
+                {Object.keys(config.areas).map(area => (
+                  <option key={area} value={area}>
+                    {area}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field">
+              <span>Nivel</span>
+              <select
+                value={selectedLevel}
+                disabled={loadingConfig}
+                onChange={e => setSelectedLevel(e.target.value)}
+              >
+                {(config.areas[selectedArea] || []).map(level => (
+                  <option
+                    key={String(level)}
+                    value={String(level)}
+                  >
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field">
+              <span>Competición</span>
+              <select
+                value={selectedComp}
+                disabled={loadingConfig}
+                onChange={e => changeCompetition(e.target.value)}
+              >
+                {!selectedComp && (
+                  <option value="">Selecciona competición</option>
+                )}
+
+                {Object.keys(config.competitions).map(comp => (
+                  <option key={comp} value={comp}>
+                    {comp}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field">
+              <span>Fase</span>
+              <select
+                value={selectedPhase}
+                disabled={loadingConfig}
+                onChange={e => setSelectedPhase(e.target.value)}
+              >
+                {(config.competitions[selectedComp] || []).map(phase => (
+                  <option
+                    key={String(phase)}
+                    value={String(phase)}
+                  >
+                    {String(phase).replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+          </div>
+
+          <div className="panel-rule" />
+
+          <div className="slider-stack">
+
+            <Slider
+              label="Importancia del partido"
+              min={1}
+              max={10}
+              value={importance}
+              onChange={setImportance}
+              suffix="/10"
+            />
+
+            <Slider
+              label="Días hasta el evento"
+              min={0}
+              max={150}
+              value={days}
+              onChange={setDays}
+              suffix=" días"
+            />
+
+            <Slider
+              label="Ocupación actual estimada"
+              min={0}
+              max={100}
+              value={occupancy}
+              onChange={setOccupancy}
+              suffix="%"
+            />
+
+          </div>
+
+          <div className="panel-rule" />
+
+          <div className="toggle-grid">
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={isDerby}
+                onChange={e => setIsDerby(e.target.checked)}
+              />
+              <span className="toggle-track" />
+              <span>Derbi local</span>
+            </label>
+
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={isHoliday}
+                onChange={e => setIsHoliday(e.target.checked)}
+              />
+              <span className="toggle-track" />
+              <span>Periodo festivo</span>
+            </label>
+          </div>
+
+          <div className="input-note">
+            <span className="material-symbols-outlined">
+              info
+            </span>
+            El backend actual no recibe la hora de inicio como
+            parámetro de simulación.
+          </div>
+
+          {/* RESUMEN DEL ESCENARIO */}
+
+          <div className="scenario-summary">
+
+            <div className="scenario-title">
+              <span className="material-symbols-outlined">
+                event_available
+              </span>
+
+              <div>
+                <strong>Resumen del escenario</strong>
+                <small>Configuración actual del evento</small>
+              </div>
+            </div>
+
+            <div className="scenario-grid">
+              <div>
+                <span>Ubicación</span>
+                <strong>
+                  {selectedArea || '—'} {selectedLevel}
+                </strong>
+              </div>
+
+              <div>
+                <span>Competición</span>
+                <strong>{selectedComp || '—'}</strong>
+              </div>
+
+              <div>
+                <span>Fase</span>
+                <strong>
+                  {selectedPhase
+                    ? selectedPhase.replaceAll('_', ' ')
+                    : '—'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Días restantes</span>
+                <strong>{days} días</strong>
+              </div>
+
+              <div>
+                <span>Ocupación</span>
+                <strong>{occupancy}%</strong>
+              </div>
+
+              <div>
+                <span>Importancia</span>
+                <strong>{importance}/10</strong>
+              </div>
+
+              <div>
+                <span>Tipo de partido</span>
+                <strong>
+                  {isDerby ? 'Derbi local' : 'Partido regular'}
+                </strong>
+              </div>
+
+              <div>
+                <span>Calendario</span>
+                <strong>
+                  {isHoliday ? 'Periodo festivo' : 'No festivo'}
+                </strong>
+              </div>
+            </div>
+
           </div>
         </section>
 
-        {/* Right Column: AI Recommendations & Metrics */}
-        <section className={`col-span-7 space-y-6 animate-fade-in-up opacity-0 stagger-1 transition-opacity duration-300 ${loading ? 'opacity-50 animate-pulse pointer-events-none' : ''}`}>
-          <div className="glass-panel p-8 rounded-2xl border-l-4 border-primary-container relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <span className="material-symbols-outlined text-[120px]">bolt</span>
-            </div>
-            <div className="flex flex-col md:flex-row justify-between items-end gap-6 relative z-10">
+        {/* COLUMNA DERECHA */}
+
+        <section className="output-stack" aria-live="polite">
+
+          {/* PRECIO RECOMENDADO */}
+
+          <div className="panel recommendation-panel">
+            <span className="section-kicker">
+              02 / RECOMENDACIÓN DEL MODELO HÍBRIDO
+            </span>
+
+            <div className="recommendation-top">
               <div>
-                <span className="text-[10px] text-primary-fixed font-bold uppercase tracking-[0.2em]">Precio Óptimo Recomendado</span>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <span className="font-numeric-xl text-[64px] text-primary leading-none">
-                    €{results ? results.suggested_optimal_price : '---'}
-                  </span>
-                  <span className={`text-label-sm font-bold flex items-center ${results?.optimal_revenue_increase_percent >= 0 ? 'text-secondary' : 'text-error'}`}>
-                    <span className="material-symbols-outlined text-sm">
-                      {results?.optimal_revenue_increase_percent >= 0 ? 'trending_up' : 'trending_down'}
-                    </span>
-                    {results ? `${results.optimal_revenue_increase_percent}%` : '+0.0%'}
-                  </span>
-                </div>
-                <p className="text-on-surface-variant text-label-sm mt-2 max-w-sm">Basado en la elasticidad actual y la demanda proyectada para los parámetros introducidos.</p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] text-on-surface-variant uppercase block mb-1">Variación vs Base</span>
-                <span className={`text-label-md font-bold mt-3 block ${!results ? 'text-on-surface' : results.suggested_optimal_price >= results.base_price ? 'text-secondary' : 'text-error'}`}>
-                  {results ? `${results.suggested_optimal_price >= results.base_price ? '+' : ''}${(results.suggested_optimal_price - results.base_price).toFixed(2)}€ (${results.base_price > 0 ? (((results.suggested_optimal_price - results.base_price) / results.base_price) * 100).toFixed(1) : '0.0'}%)` : '--'}
+                <span className="muted-label">
+                  Precio recomendado por el modelo
                 </span>
+
+                <div className="big-price">
+                  {currentResults
+                    ? eur(currentResults.suggested_optimal_price)
+                    : '—'}
+                </div>
               </div>
+
+              <span className="signal-icon material-symbols-outlined">
+                trending_up
+              </span>
             </div>
+
+            <div className="comparison-line">
+              <span>
+                Precio base:{' '}
+                <strong>
+                  {currentResults
+                    ? eur(currentResults.base_price)
+                    : '—'}
+                </strong>
+              </span>
+
+              <span
+                className={
+                  changePercent === null
+                    ? 'change-chip'
+                    : changePercent >= 0
+                      ? 'change-chip positive'
+                      : 'change-chip negative'
+                }
+              >
+                {changePercent === null
+                  ? 'Sin simulación actualizada'
+                  : `${changePercent >= 0 ? '+' : ''}${num(changePercent)} % vs. base`}
+              </span>
+            </div>
+
+            <p className="recommendation-note">
+              Simulación exploratoria basada en XGBoost y una regla
+              manual de elasticidad. No representa un precio óptimo
+              validado comercialmente.
+            </p>
           </div>
 
-          <div className="glass-panel p-6 rounded-2xl">
-            <div className="flex justify-between items-center mb-8">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-secondary">show_chart</span>
-                <h3 className="font-headline-md text-label-md uppercase tracking-widest">Curva de Maximización de Ingresos</h3>
+          {/* METRICAS */}
+
+          <div className="metric-grid">
+
+            <Metric
+              label="Ingresos estimados"
+              value={
+                currentResults
+                  ? eur(currentResults.expected_revenue, 0)
+                  : '—'
+              }
+              help="Para el escenario recomendado"
+              accent
+              explanation="Ingresos calculados por el optimizador para el precio recomendado. No son ingresos garantizados."
+            />
+
+            <Metric
+              label="RevPAR informado por API"
+              value={
+                currentResults
+                  ? eur(currentResults.revpar)
+                  : '—'
+              }
+              help="Ingresos por asiento disponible"
+              explanation="Revenue per Available Seat. La cifra se recibe directamente del backend."
+            />
+
+            <Metric
+              label="Tasa XGBoost inicial"
+              value={
+                currentResults
+                  ? num(currentResults.xgboost_raw_prediction, 2)
+                  : '—'
+              }
+              help="Ventas previstas por día"
+              explanation="Predicción inicial de XGBoost antes de aplicar el ajuste manual de elasticidad."
+            />
+
+            <Metric
+              label="Parámetro de elasticidad"
+              value={
+                currentResults
+                  ? num(currentResults.elasticity, 2)
+                  : '—'
+              }
+              help="Regla manual de sensibilidad"
+              explanation="Parámetro usado por el optimizador. No es una elasticidad estimada directamente a partir de ventas reales."
+            />
+
+          </div>
+
+          {/* GRAFICA */}
+
+          <div className="panel chart-panel">
+
+            <div className="chart-heading">
+              <div>
+                <span className="section-kicker">
+                  03 / ANÁLISIS DE ESCENARIOS
+                </span>
+
+                <h2>
+                  {chartMode === 'Ingresos'
+                    ? 'Curva de ingresos'
+                    : 'Curva de demanda'}
+                </h2>
+
+                <p>
+                  {chartMode === 'Ingresos'
+                    ? 'Ingresos estimados para cada precio simulado.'
+                    : 'Entradas proyectadas para cada precio simulado.'}
+                </p>
               </div>
-              <div className="flex gap-2">
-                <span className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-[10px] font-bold">DEMANDA</span>
-                <span className="px-3 py-1 bg-secondary/10 text-secondary border border-secondary/20 rounded-full text-[10px] font-bold">INGRESOS</span>
+
+              <div className="chart-switch" role="group">
+                <button
+                  type="button"
+                  className={chartMode === 'Ingresos' ? 'selected' : ''}
+                  aria-pressed={chartMode === 'Ingresos'}
+                  onClick={() => setChartMode('Ingresos')}
+                >
+                  Ingresos
+                </button>
+
+                <button
+                  type="button"
+                  className={chartMode === 'Demanda' ? 'selected' : ''}
+                  aria-pressed={chartMode === 'Demanda'}
+                  onClick={() => setChartMode('Demanda')}
+                >
+                  Demanda
+                </button>
               </div>
             </div>
-            
-            <div className="h-64 flex items-end justify-between gap-2 relative mt-6">
-              {results && results.sweep_data ? (
+
+            <div className="chart-description">
+              <span className="material-symbols-outlined">info</span>
+              <p>
+                {chartMode === 'Ingresos'
+                  ? 'Ingresos estimados por el optimizador híbrido. Se calculan multiplicando precio por demanda proyectada.'
+                  : 'Demanda proyectada por XGBoost más el ajuste manual de elasticidad. No es la predicción pura de XGBoost.'}
+              </p>
+            </div>
+
+            <div className="chart-wrap">
+
+              {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
+
                   <AreaChart
-                    data={results.sweep_data}
-                    margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+                    data={chartData}
+                    margin={{ top: 15, right: 12, left: 0, bottom: 5 }}
                   >
                     <defs>
-                      <linearGradient id="colorIngresos" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ffed00" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#ffed00" stopOpacity={0}/>
+                      <linearGradient
+                        id="revenueGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor={chartColor}
+                          stopOpacity={0.38}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor={chartColor}
+                          stopOpacity={0.01}
+                        />
                       </linearGradient>
                     </defs>
-                    <XAxis 
-                      dataKey="Precio" 
+
+                    <CartesianGrid
+                      vertical={false}
+                      stroke="#293449"
+                      strokeDasharray="3 6"
+                    />
+
+                    <XAxis
+                      dataKey="Precio"
                       type="number"
                       domain={['dataMin', 'dataMax']}
-                      tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }}
-                      tickFormatter={(value) => `€${Math.round(value)}`}
-                      stroke="rgba(255,255,255,0.1)"
+                      tickFormatter={v => `${Math.round(v)} €`}
+                      tick={{ fill: '#8796ae', fontSize: 11 }}
+                      stroke="#293449"
+                      tickLine={false}
                     />
-                    <YAxis 
-                      hide={true} 
-                      domain={['dataMin - 1000', 'dataMax + 2000']} 
+
+                    <YAxis
+                      tickFormatter={v =>
+                        chartMode === 'Ingresos'
+                          ? `${Math.round(v / 1000)}k`
+                          : String(Math.round(v))
+                      }
+                      tick={{ fill: '#8796ae', fontSize: 11 }}
+                      stroke="transparent"
+                      tickLine={false}
+                      width={45}
                     />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,237,0,0.3)', borderRadius: '8px' }}
-                      itemStyle={{ color: '#ffed00' }}
-                      labelStyle={{ color: 'white' }}
-                      formatter={(value) => [`€${Math.round(value).toLocaleString()}`, 'Ingresos Estimados']}
-                      labelFormatter={(label) => `Precio: €${Number(label).toFixed(2)}`}
+
+                    <Tooltip
+                      contentStyle={{
+                        background: '#161f31',
+                        border: '1px solid #38445c',
+                        borderRadius: 12,
+                        color: '#f3f5fb'
+                      }}
+                      labelFormatter={v => `Precio: ${eur(v)}`}
+                      formatter={v => [
+                        chartMode === 'Ingresos'
+                          ? eur(v, 0)
+                          : `${num(v, 1)} entradas`,
+                        chartMode
+                      ]}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="Ingresos" 
-                      stroke="#ffed00" 
-                      strokeWidth={4}
-                      fillOpacity={1} 
-                      fill="url(#colorIngresos)" 
+
+                    <Area
+                      type="monotone"
+                      dataKey={chartMode}
+                      stroke={chartColor}
+                      strokeWidth={3}
+                      fill="url(#revenueGradient)"
+                      dot={false}
+                      activeDot={{ r: 5 }}
                     />
-                    <ReferenceLine 
-                      x={results.suggested_optimal_price} 
-                      stroke="#00ff00" 
-                      strokeDasharray="3 3"
-                      label={{ position: 'top', value: `ÓPTIMO: €${results.suggested_optimal_price}`, fill: '#00ff00', fontSize: 12, fontWeight: 'bold' }} 
-                    />
-                    <ReferenceLine 
-                      x={results.base_price} 
-                      stroke="rgba(255,255,255,0.5)" 
-                      strokeDasharray="1 1"
-                      label={{ position: 'insideBottomLeft', value: 'BASE', fill: 'rgba(255,255,255,0.5)', fontSize: 10 }} 
-                    />
-                    {/* Punto exacto en la curva */}
-                    <ReferenceDot 
-                      x={results.suggested_optimal_price} 
-                      y={results.expected_revenue} 
-                      r={6} 
-                      fill="#00ff00" 
-                      stroke="none" 
-                    />
+
+                    {currentResults && (
+                      <ReferenceLine
+                        x={Number(currentResults.suggested_optimal_price)}
+                        stroke="#5ee1b3"
+                        strokeDasharray="5 5"
+                      />
+                    )}
+
+                    {currentResults && (
+                      <ReferenceLine
+                        x={Number(currentResults.base_price)}
+                        stroke="#8d9ab1"
+                        strokeDasharray="3 5"
+                      />
+                    )}
+
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
-                  <div className="border-b border-white"></div>
-                  <div className="border-b border-white"></div>
-                  <div className="border-b border-white"></div>
-                  <div className="border-b border-white"></div>
-                  <div className="w-full h-full flex items-center justify-center text-white/50 font-bold uppercase mt-8">
-                    Ejecuta la simulación para ver la curva
-                  </div>
+                <div className="chart-empty">
+                  <span className="material-symbols-outlined">
+                    monitoring
+                  </span>
+
+                  <strong>
+                    {isOutdated
+                      ? 'Resultados pendientes de actualizar'
+                      : 'La curva aparecerá aquí'}
+                  </strong>
+
+                  <p>
+                    {isOutdated
+                      ? 'Ejecuta una nueva simulación.'
+                      : 'Configura el evento y ejecuta una simulación.'}
+                  </p>
                 </div>
               )}
+
             </div>
+
+            {currentResults && (
+              <div className="chart-footnote">
+                <span>
+                  <i className="base-line" />
+                  Precio base: {eur(currentResults.base_price)}
+                </span>
+                <span>
+                  <i className="optimal-line" />
+                  Precio recomendado: {eur(currentResults.suggested_optimal_price)}
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="glass-panel p-6 rounded-2xl border-l-4 border-secondary flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">Elasticidad Estimada</span>
-                <span className="material-symbols-outlined text-secondary">analytics</span>
+          {/* ========================================
+              NUEVO PANEL DE REVISION HUMANA V4
+          ======================================== */}
+
+          <div className="panel review-panel-v4">
+
+            <div className="review-header-v4">
+
+              <div className="review-heading-v4">
+
+                <div className="review-icon-v4">
+                  <span className="material-symbols-outlined">
+                    verified_user
+                  </span>
+                </div>
+
+                <div>
+                  <span className="section-kicker">
+                    04 / CONTROL Y VALIDACIÓN
+                  </span>
+
+                  <h2>Revisión de la recomendación</h2>
+                </div>
+
               </div>
-              <div className="mt-4">
-                <span className="font-numeric-xl text-headline-lg text-secondary">
-                  {results ? `-${results.elasticity}` : '---'}
+
+              <span
+                className={`review-badge-v4 ${
+                  !currentResults
+                    ? 'neutral'
+                    : reviewCompleted
+                      ? 'completed'
+                      : 'pending'
+                }`}
+              >
+                <span className="review-badge-dot" />
+
+                {!currentResults
+                  ? 'Sin simulación'
+                  : reviewCompleted
+                    ? 'Revisada'
+                    : reviewPending
+                      ? 'Por revisar'
+                      : 'Pendiente'}
+              </span>
+            </div>
+
+            <p className="review-subtitle-v4">
+              Revisa la propuesta antes de tomar una decisión comercial.
+              Esta función es demostrativa y no publica ni guarda precios.
+            </p>
+
+            <div className="review-content-v4">
+
+              <span className="material-symbols-outlined">
+                {!currentResults
+                  ? 'info'
+                  : reviewCompleted
+                    ? 'task_alt'
+                    : 'pending_actions'}
+              </span>
+
+              <div>
+                <strong>
+                  {!currentResults
+                    ? 'No hay una recomendación vigente'
+                    : reviewCompleted
+                      ? 'Revisión registrada en esta sesión'
+                      : reviewPending
+                        ? 'Recomendación marcada para revisar'
+                        : 'Recomendación lista para revisión'}
+                </strong>
+
+                <p>
+                  {!currentResults
+                    ? 'Ejecuta una simulación para habilitar la revisión.'
+                    : reviewCompleted
+                      ? 'El estado se ha actualizado únicamente en esta interfaz.'
+                      : `Precio sugerido: ${eur(currentResults.suggested_optimal_price)}`}
+                </p>
+              </div>
+
+            </div>
+
+            <div className="review-footer-v4">
+
+              <span className="review-disclaimer-v4">
+                <span className="material-symbols-outlined">
+                  lock
                 </span>
-                <p className="text-label-sm text-on-surface-variant mt-1">Sensibilidad Inelástica Moderada</p>
+                Sin publicación automática
+              </span>
+
+              <div className="review-actions-v4">
+
+                <button
+                  type="button"
+                  className="review-secondary-v4"
+                  disabled={!currentResults}
+                  onClick={() =>
+                    registerReview('Pendiente de revisión')
+                  }
+                >
+                  Marcar para revisar
+                </button>
+
+                <button
+                  type="button"
+                  className="review-primary-v4"
+                  disabled={!currentResults}
+                  onClick={() =>
+                    registerReview('Revisión registrada localmente')
+                  }
+                >
+                  <span className="material-symbols-outlined">
+                    check_circle
+                  </span>
+                  Registrar revisión
+                </button>
+
               </div>
             </div>
-            <div className="glass-panel p-6 rounded-2xl border-l-4 border-primary flex flex-col justify-between">
-              <div className="flex justify-between items-start">
-                <span className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest">RevPAR Proyectado</span>
-                <span className="material-symbols-outlined text-primary">euro</span>
-              </div>
-              <div className="mt-4">
-                <span className="font-numeric-xl text-headline-lg text-primary">
-                  €{results ? results.revpar : '---'}
-                </span>
-                <p className="text-label-sm text-on-surface-variant mt-1">Eficiencia por asiento disponible</p>
-              </div>
-            </div>
+
           </div>
+
         </section>
       </div>
+
+      <footer className="app-footer">
+        PAE · Smart Stadium Pricing · Prototipo académico
+        con datos sintéticos · Sin publicación automática de precios
+      </footer>
+
     </main>
   );
-};
-
-export default Simulator;
+}

@@ -1,1 +1,7 @@
-/* Tailwind will be loaded via CDN. No extra CSS needed here. */
+html {
+  min-width: 320px;
+}
+
+body {
+  margin: 0;
+}
