@@ -69,3 +69,10 @@ spec_output.txt
 feature_importance_engraving.txt
 __pycache__/
 *.py[cod]
+
+# Datasets necesarios para STADIUM IQ
+!dataset_multideporte_EQUIPO.csv
+
+# Resultados definitivos de validación
+!frontend/public/validation/v8_2_detalle.csv
+!frontend/public/validation/v8_2_repeticiones.csv

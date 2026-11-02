@@ -1,0 +1,68 @@
+{
+  "direct": {
+    "mae_entradas": 8.541,
+    "rmse_entradas": 15.763,
+    "r2": 0.6202,
+    "por_deporte": {
+      "basketball": {
+        "mae_entradas": 7.556,
+        "rmse_entradas": 13.465,
+        "r2": 0.5971
+      },
+      "football": {
+        "mae_entradas": 6.984,
+        "rmse_entradas": 12.841,
+        "r2": 0.6207
+      },
+      "running": {
+        "mae_entradas": 12.899,
+        "rmse_entradas": 23.155,
+        "r2": 0.572
+      },
+      "tennis": {
+        "mae_entradas": 6.79,
+        "rmse_entradas": 10.21,
+        "r2": 0.4986
+      }
+    }
+  },
+  "rate": {
+    "mae_entradas": 8.769,
+    "rmse_entradas": 15.74,
+    "r2": 0.6214,
+    "por_deporte": {
+      "basketball": {
+        "mae_entradas": 7.931,
+        "rmse_entradas": 14.134,
+        "r2": 0.5561
+      },
+      "football": {
+        "mae_entradas": 6.759,
+        "rmse_entradas": 12.336,
+        "r2": 0.65
+      },
+      "running": {
+        "mae_entradas": 13.912,
+        "rmse_entradas": 23.245,
+        "r2": 0.5687
+      },
+      "tennis": {
+        "mae_entradas": 6.65,
+        "rmse_entradas": 9.875,
+        "r2": 0.531
+      }
+    }
+  },
+  "baseline_media": {
+    "mae_entradas": 12.861,
+    "rmse_entradas": 24.527,
+    "r2": 0.0806
+  },
+  "particion": {
+    "eventos_entrenamiento": 96,
+    "eventos_prueba": 24,
+    "filas_entrenamiento": 5760,
+    "filas_prueba": 1440,
+    "semilla": 42
+  }
+}

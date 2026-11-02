@@ -1,0 +1,480 @@
+
+.ms-main {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  min-height: 100vh;
+  padding: 38px 40px 70px;
+  box-sizing: border-box;
+  color: #e8edff;
+  background: linear-gradient(135deg, #0d1223, #11182d);
+  font-family: inherit;
+}
+
+.ms-main * {
+  box-sizing: border-box;
+}
+
+.ms-eyebrow {
+  color: #ab9cff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.ms-header {
+  margin-bottom: 28px;
+}
+
+.ms-header h1 {
+  font-size: clamp(27px, 3vw, 40px);
+  margin: 12px 0;
+}
+
+.ms-header h1 span {
+  color: #a99aff;
+}
+
+.ms-header p,
+.ms-muted {
+  font-size: 12px;
+  color: #95aed5;
+  line-height: 1.6;
+}
+
+.ms-layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.ms-panel,
+.ms-card {
+  background: #171f32;
+  border: 1px solid #35415e;
+  border-radius: 15px;
+  padding: 22px;
+}
+
+.ms-form h2,
+.ms-chart h2 {
+  font-size: 19px;
+  margin: 0 0 25px;
+}
+
+.ms-label {
+  display: block;
+  color: #b8c9e8;
+  font-weight: 700;
+  font-size: 12px;
+  margin: 18px 0 10px;
+}
+
+.ms-sports {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px;
+}
+
+.ms-sport {
+  min-height: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  background: #222d45;
+  color: #c0d1ef;
+  border: 1px solid #425171;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ms-sport.selected {
+  background: #312b53;
+  border-color: #aa9bff;
+  color: #ffffff;
+}
+
+.ms-form select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #465572;
+  border-radius: 9px;
+  background: #222e45;
+  color: #ffffff;
+}
+
+.ms-divider {
+  height: 1px;
+  background: #35415e;
+  margin: 25px 0;
+}
+
+.ms-slider-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 15px 0 10px;
+  font-size: 12px;
+}
+
+.ms-slider-title strong {
+  color: #b5a6ff;
+  font-size: 16px;
+}
+
+.ms-form input[type="range"] {
+  width: 100%;
+  accent-color: #aa9bff;
+  cursor: pointer;
+}
+
+.ms-range-labels {
+  display: flex;
+  justify-content: space-between;
+  color: #7995c4;
+  font-size: 11px;
+}
+
+.ms-inventory {
+  margin-top: 20px;
+  padding: 15px;
+  background: #202b43;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.ms-inventory > div:first-child {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ms-progress {
+  height: 8px;
+  background: #39445f;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.ms-progress > div {
+  height: 100%;
+  background: #ac9cff;
+}
+
+.ms-hypothetical {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #efcb85;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ms-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  margin-top: 13px;
+  padding: 10px;
+  border: 1px solid #6e649d;
+  border-radius: 8px;
+  color: #d5caff;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ms-reset:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ms-advanced {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #c8d6f3;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.ms-advanced > span:last-child {
+  margin-left: auto;
+}
+
+.ms-advanced-body {
+  background: #222d45;
+  padding: 14px;
+  margin-top: 15px;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #a6b9dd;
+}
+
+.ms-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 15px;
+  margin: 25px 0 15px;
+  background: #aa9bff;
+  color: #15132b;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ms-submit:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ms-results {
+  min-width: 0;
+}
+
+.ms-results > * {
+  margin-bottom: 15px;
+}
+
+.ms-empty,
+.ms-status {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #ad9fff;
+}
+
+.ms-empty h2,
+.ms-status h2 {
+  color: #eef0ff;
+}
+
+.ms-empty p,
+.ms-status p {
+  max-width: 540px;
+  color: #a9bee1;
+  line-height: 1.7;
+}
+
+.ms-status-grid,
+.ms-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  width: 100%;
+  margin: 18px 0;
+}
+
+.ms-card p {
+  color: #a1b7db;
+  font-size: 12px;
+  margin: 0 0 14px;
+}
+
+.ms-card strong {
+  display: block;
+  font-size: 23px;
+  color: #f1f2ff;
+}
+
+.ms-card small {
+  display: block;
+  margin-top: 10px;
+  color: #9eb0d0;
+  line-height: 1.5;
+}
+
+.ms-hero {
+  background: linear-gradient(135deg, #272341, #192039);
+  border-color: #62558e;
+}
+
+.ms-hero > p {
+  font-size: 13px;
+  color: #b3c4e9;
+  margin-top: 20px;
+}
+
+.ms-big-price {
+  font-size: clamp(40px, 5vw, 60px);
+  font-weight: 850;
+  letter-spacing: -2px;
+}
+
+.ms-explanation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 17px;
+  margin-top: 22px;
+  background: #232d49;
+  border: 1px solid #4d507e;
+  border-radius: 10px;
+  color: #d8e2fa;
+  line-height: 1.7;
+  font-size: 13px;
+}
+
+.ms-gain {
+  display: inline-flex;
+  padding: 10px 15px;
+  border-radius: 30px;
+  margin-top: 18px;
+  background: #234137;
+  color: #87e1b5;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ms-difference {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #b5a6ff;
+}
+
+.ms-difference strong {
+  font-size: 23px;
+  color: #f0efff;
+}
+
+.ms-difference p {
+  font-size: 12px;
+  color: #9fb3d5;
+}
+
+.ms-chart-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.ms-chart h2 {
+  margin: 12px 0;
+}
+
+.ms-tabs {
+  display: flex;
+  border: 1px solid #536080;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.ms-tabs button {
+  border: 0;
+  color: #c1d1ed;
+  padding: 9px 12px;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.ms-tabs button.active {
+  background: #aa9bff;
+  color: #17152e;
+}
+
+.ms-plot {
+  width: 100%;
+  height: 325px;
+  margin-top: 15px;
+}
+
+.ms-details summary {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ms-details p,
+.ms-disclaimer {
+  color: #a9bcdf;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.ms-checks {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.ms-checks > div {
+  background: #222e45;
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.ms-checks span,
+.ms-checks small {
+  display: block;
+  color: #9eb2d7;
+  font-size: 11px;
+}
+
+.ms-checks strong {
+  display: block;
+  margin: 10px 0;
+}
+
+.ms-disclaimer {
+  padding: 15px;
+  background: #302c2c;
+  border-radius: 10px;
+  color: #e4cb9c;
+}
+
+.ms-error {
+  color: #ffd0d0;
+  background: #492b36;
+}
+
+@media (max-width: 1200px) {
+  .ms-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ms-sports {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 800px) {
+  .ms-main {
+    margin-left: 0;
+    width: 100%;
+    padding: 24px;
+  }
+
+  .ms-sports {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ms-status-grid,
+  .ms-compare,
+  .ms-checks {
+    grid-template-columns: 1fr;
+  }
+
+  .ms-chart-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

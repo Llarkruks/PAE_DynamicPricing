@@ -1,0 +1,46 @@
+{
+  "version": "8.2",
+  "repeticiones": 20,
+  "eventos_entrenamiento": 96,
+  "eventos_evaluacion": 24,
+  "categorias": 48,
+  "mejora_global_pct": {
+    "media": 13.957,
+    "desviacion": 0.999,
+    "percentil_5": 12.553,
+    "percentil_95": 15.719
+  },
+  "repeticiones_con_mejora": 20,
+  "categorias_ganadas": {
+    "media": 33.15
+  },
+  "deportes": {
+    "basketball": {
+      "mejora_pct": {
+        "media": 15.005
+      }
+    },
+    "football": {
+      "mejora_pct": {
+        "media": 15.456
+      }
+    },
+    "running": {
+      "mejora_pct": {
+        "media": 11.821
+      }
+    },
+    "tennis": {
+      "mejora_pct": {
+        "media": 15.916
+      }
+    }
+  },
+  "advertencias": [
+    "Demanda sintetica; no demuestra mejora comercial real.",
+    "Se mantiene fijo el modelo y la particion de eventos.",
+    "Se comparten shocks diarios y cuantiles Poisson entre politicas.",
+    "El ajuste diario no optimiza el horizonte completo.",
+    "Percentiles descriptivos, no intervalos de confianza generalizables."
+  ]
+}

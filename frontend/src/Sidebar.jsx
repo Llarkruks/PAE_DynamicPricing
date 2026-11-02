@@ -1,5 +1,30 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+
+import React from "react";
+import { NavLink } from "react-router-dom";
+
+const navigation = [
+  {
+    path: "/",
+    icon: "dashboard",
+    label: "Inicio",
+    end: true
+  },
+  {
+    path: "/multisport",
+    icon: "tune",
+    label: "Simulador de precios"
+  },
+  {
+    path: "/simulator",
+    icon: "sports_soccer",
+    label: "Simulador original"
+  },
+  {
+    path: "/validation",
+    icon: "monitoring",
+    label: "Resultados y validación"
+  }
+];
 
 export default function Sidebar() {
   return (
@@ -20,40 +45,43 @@ export default function Sidebar() {
       </div>
 
       <div className="nav-caption">
-        WORKSPACE
+        PLATAFORMA
       </div>
 
       <nav aria-label="Navegación principal">
-        <NavLink
-          to="/simulator"
-          className={({ isActive }) =>
-            `nav-entry ${isActive ? 'active' : ''}`
-          }
-        >
-          <span className="material-symbols-outlined">
-            tune
-          </span>
+        {navigation.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.end}
+            className={({ isActive }) =>
+              `nav-entry ${isActive ? "active" : ""}`
+            }
+          >
+            <span className="material-symbols-outlined">
+              {item.icon}
+            </span>
 
-          Simulador de precios
-        </NavLink>
+            {item.label}
+          </NavLink>
+        ))}
       </nav>
 
       <div className="sidebar-bottom">
         <div className="status-dot">
           <span />
-          Motor de simulación
+          Plataforma de simulación
         </div>
 
         <p>
-          Prototipo universitario.
-          Resultados no validados comercialmente.
+          Sistema experimental de predicción
+          de demanda y optimización de precios.
         </p>
 
         <small>
-          PAE · Smart Stadium Pricing
+          Smart Stadium Pricing · Proyecto PAE
         </small>
       </div>
-
     </aside>
   );
 }

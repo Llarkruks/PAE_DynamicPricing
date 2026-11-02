@@ -1,14 +1,19 @@
-import React from 'react';
+
+import React from "react";
 import {
   BrowserRouter,
   Navigate,
   Route,
   Routes
-} from 'react-router-dom';
+} from "react-router-dom";
 
-import Sidebar from './Sidebar';
-import Simulator from './pages/Simulator';
-import './App.css';
+import Sidebar from "./Sidebar";
+import Dashboard from "./pages/Dashboard";
+import Simulator from "./pages/Simulator";
+import Multisport from "./pages/Multisport";
+import Validation from "./pages/Validation";
+
+import "./App.css";
 
 export default function App() {
   return (
@@ -17,9 +22,11 @@ export default function App() {
         <Sidebar />
 
         <Routes>
+          <Route path="/" element={<Dashboard />} />
+
           <Route
-            path="/"
-            element={<Navigate to="/simulator" replace />}
+            path="/multisport"
+            element={<Multisport />}
           />
 
           <Route
@@ -28,8 +35,13 @@ export default function App() {
           />
 
           <Route
+            path="/validation"
+            element={<Validation />}
+          />
+
+          <Route
             path="*"
-            element={<Navigate to="/simulator" replace />}
+            element={<Navigate to="/" replace />}
           />
         </Routes>
       </div>

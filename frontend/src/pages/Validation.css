@@ -1,0 +1,385 @@
+
+/* STADIUM IQ - VALIDACION V8.1 */
+
+.validation-page {
+  margin-left: 258px;
+  width: calc(100% - 258px);
+  min-width: 0;
+  min-height: 100vh;
+  padding: 36px 38px 55px;
+
+  color: #e9eefc;
+  background: #0c1220;
+
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* CABECERA */
+
+.validation-header {
+  max-width: 920px;
+  margin-bottom: 28px;
+}
+
+.validation-eyebrow {
+  margin-bottom: 12px;
+  color: #ab9cff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+
+.validation-header h1 {
+  margin: 0 0 12px;
+  font-size: clamp(27px, 3vw, 38px);
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.validation-header p {
+  max-width: 760px;
+  color: #aab8d1;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* INDICADORES */
+
+.validation-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.validation-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  min-width: 0;
+  min-height: 145px;
+  padding: 20px;
+
+  border: 1px solid #2b3852;
+  background: #151f35;
+  border-radius: 14px;
+}
+
+.validation-kpi span {
+  color: #aab8d1;
+  font-size: 12px;
+}
+
+.validation-kpi strong {
+  color: #eef2ff;
+  font-size: clamp(22px, 2.2vw, 31px);
+  font-weight: 800;
+  letter-spacing: -0.7px;
+}
+
+.validation-kpi small {
+  margin-top: auto;
+  color: #899bb9;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.validation-page .positive {
+  color: #6cdbb8;
+}
+
+.validation-page .negative {
+  color: #ff9d9d;
+}
+
+/* PANELES */
+
+.validation-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.validation-panel {
+  min-width: 0;
+  padding: 23px;
+
+  background: #151f35;
+  border: 1px solid #2b3852;
+  border-radius: 14px;
+}
+
+.validation-panel h2 {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.validation-panel h3 {
+  margin: 0 0 7px;
+  font-size: 15px;
+}
+
+.validation-panel p {
+  margin: 0;
+  color: #a7b6d0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.validation-chart {
+  width: 100%;
+  height: 270px;
+  margin-top: 22px;
+  min-width: 0;
+}
+
+.validation-chart.validation-large {
+  height: 380px;
+  margin-top: 15px;
+}
+
+/* EVOLUCION POR EVENTO */
+
+.validation-wide {
+  margin-bottom: 20px;
+}
+
+.validation-panel-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.validation-select-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  color: #acbbd6;
+  font-size: 12px;
+}
+
+.validation-select-label select {
+  min-width: 200px;
+  max-width: 100%;
+  padding: 11px 12px;
+
+  background: #22304c;
+  color: #eef2ff;
+  border: 1px solid #445475;
+  border-radius: 9px;
+}
+
+.validation-category-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 23px 0;
+}
+
+.validation-category-kpis > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 17px;
+  background: #1b2942;
+  border-radius: 11px;
+}
+
+.validation-category-kpis span {
+  color: #a6b5d0;
+  font-size: 12px;
+}
+
+.validation-category-kpis strong {
+  font-size: 22px;
+  color: #f1f4fc;
+}
+
+.validation-chart-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.validation-toggle {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+
+  border: 1px solid #3b4a68;
+  border-radius: 10px;
+}
+
+.validation-toggle button {
+  border: none;
+  border-radius: 7px;
+  padding: 9px 14px;
+
+  color: #b6c4de;
+  background: transparent;
+
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.validation-toggle button.selected {
+  color: #151428;
+  background: #ac9bff;
+}
+
+.validation-stock-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.validation-stock-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  background: #1b2942;
+  border: 1px solid #32405d;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.validation-stock-info strong {
+  font-size: 12px;
+}
+
+.validation-stock-info span {
+  color: #aab8d1;
+  font-size: 12px;
+}
+
+.validation-panel .validation-chart-note {
+  margin-top: 16px;
+  color: #8497b6;
+  font-size: 11px;
+}
+
+/* AVISOS */
+
+.validation-notice {
+  padding: 14px 18px;
+  margin-bottom: 20px;
+
+  background: #29263b;
+  color: #e5d6a5;
+  border: 1px solid #554c51;
+  border-radius: 10px;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.validation-placeholder {
+  min-height: 180px;
+  margin-top: 20px;
+  padding: 22px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+
+  background: #111a2c;
+  border: 1px dashed #3c4b68;
+  border-radius: 11px;
+
+  color: #a9b8d3;
+  font-size: 13px;
+}
+
+.validation-footer {
+  border-left: 3px solid #ac9bff;
+  border-radius: 8px;
+
+  padding: 18px 21px;
+  background: #171f33;
+}
+
+.validation-footer strong {
+  font-size: 13px;
+}
+
+.validation-footer p {
+  margin: 8px 0 0;
+  color: #9eafca;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.validation-page code {
+  color: #d3c6ff;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 1250px) {
+  .validation-page {
+    padding: 30px 25px;
+  }
+
+  .validation-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .validation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .validation-page {
+    margin-left: 0;
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .validation-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .validation-kpi {
+    padding: 15px;
+    min-height: 130px;
+  }
+
+  .validation-kpi strong {
+    font-size: 23px;
+  }
+
+  .validation-panel {
+    padding: 17px;
+  }
+
+  .validation-category-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .validation-stock-info {
+    grid-template-columns: 1fr;
+  }
+
+  .validation-chart.validation-large {
+    height: 310px;
+  }
+}

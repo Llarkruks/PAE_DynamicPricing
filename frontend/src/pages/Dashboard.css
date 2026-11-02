@@ -1,0 +1,313 @@
+
+/* STADIUM IQ - PANEL PRINCIPAL */
+
+.dashboard-page {
+  margin-left: 258px;
+  width: calc(100% - 258px);
+  min-width: 0;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 38px 42px 60px;
+  background: #0c1220;
+  color: #edf1ff;
+}
+
+.dashboard-hero {
+  padding: 52px 42px;
+  border-radius: 20px;
+  border: 1px solid #51477d;
+
+  background:
+    radial-gradient(
+      ellipse at 90% 15%,
+      rgba(159, 135, 255, 0.2),
+      transparent 48%
+    ),
+    linear-gradient(
+      135deg,
+      #1b2340,
+      #111a30 70%
+    );
+
+  margin-bottom: 36px;
+}
+
+.dashboard-eyebrow {
+  color: #b3a3ff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+}
+
+.dashboard-hero h1 {
+  max-width: 780px;
+  margin: 0 0 20px;
+
+  font-size: clamp(32px, 4vw, 54px);
+  line-height: 1.15;
+  letter-spacing: -1.7px;
+  font-weight: 800;
+}
+
+.dashboard-hero h1 span {
+  color: #ab97ff;
+}
+
+.dashboard-hero p {
+  max-width: 690px;
+  margin: 0;
+
+  color: #b5c2dc;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.dashboard-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.dashboard-primary-button,
+.dashboard-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  padding: 13px 20px;
+  border-radius: 10px;
+
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 750;
+
+  transition: transform 0.2s, background 0.2s;
+}
+
+.dashboard-primary-button {
+  color: #141427;
+  background: #af9aff;
+}
+
+.dashboard-secondary-button {
+  color: #dfd9ff;
+  border: 1px solid #5a4e84;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-primary-button:hover,
+.dashboard-secondary-button:hover {
+  transform: translateY(-2px);
+}
+
+.dashboard-hero-actions .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.dashboard-section {
+  margin-bottom: 36px;
+}
+
+.dashboard-section-heading {
+  margin-bottom: 20px;
+}
+
+.dashboard-section-heading span {
+  display: block;
+  color: #ad9bff;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.dashboard-section-heading h2 {
+  margin: 0;
+  font-size: 25px;
+  letter-spacing: -0.5px;
+}
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 285px;
+  padding: 26px;
+
+  background: #151f35;
+  border: 1px solid #2c3955;
+  border-radius: 15px;
+
+  text-decoration: none;
+  color: #edf1ff;
+
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-4px);
+  border-color: #9683ed;
+}
+
+.dashboard-card.featured {
+  border-color: #6959ad;
+  background:
+    linear-gradient(
+      145deg,
+      #211e40,
+      #151f35 75%
+    );
+}
+
+.dashboard-card-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 46px;
+  height: 46px;
+
+  margin-bottom: 22px;
+  border-radius: 12px;
+
+  background: #302a56;
+  color: #b7a8ff;
+}
+
+.dashboard-card-icon .material-symbols-outlined {
+  font-size: 25px;
+}
+
+.dashboard-card-tag {
+  color: #ae9dff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 9px;
+}
+
+.dashboard-card h3 {
+  font-size: 20px;
+  margin: 0 0 13px;
+}
+
+.dashboard-card p {
+  color: #aab8d1;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.dashboard-card-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-top: auto;
+  padding-top: 22px;
+
+  color: #baabff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dashboard-card-link .material-symbols-outlined {
+  font-size: 17px;
+}
+
+.dashboard-process {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.dashboard-process-step {
+  padding: 22px;
+  border: 1px solid #2c3955;
+  border-radius: 13px;
+  background: #151f35;
+}
+
+.dashboard-step-number {
+  color: #a895ff;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 19px;
+}
+
+.dashboard-process-step h3 {
+  font-size: 16px;
+  margin: 0 0 10px;
+}
+
+.dashboard-process-step p {
+  color: #a6b5cf;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.dashboard-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 18px 20px;
+  border-radius: 10px;
+
+  color: #a8b6d1;
+  background: #172137;
+}
+
+.dashboard-disclaimer .material-symbols-outlined {
+  color: #ae9cff;
+  font-size: 20px;
+}
+
+.dashboard-disclaimer p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+@media (max-width: 1250px) {
+  .dashboard-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-process {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-page {
+    margin-left: 0;
+    width: 100%;
+    padding: 24px 16px;
+  }
+
+  .dashboard-hero {
+    padding: 32px 24px;
+  }
+
+  .dashboard-cards,
+  .dashboard-process {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-card {
+    min-height: 245px;
+  }
+}

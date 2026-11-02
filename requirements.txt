@@ -1,7 +1,11 @@
-streamlit
+
+fastapi
+uvicorn
+pydantic
 pandas
 numpy
 joblib
 scikit-learn
 xgboost
+scipy
 plotly
