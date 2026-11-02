@@ -7,7 +7,7 @@
 
 **Intelligent Demand Forecasting & Dynamic Ticket Pricing**
 
-Una plataforma de inteligencia artificial para predecir la demanda de entradas deportivas, recomendar precios y evaluar estrategias de pricing.
+Plataforma de inteligencia artificial para predecir la demanda de entradas deportivas, recomendar precios y evaluar estrategias de pricing.
 
 <br>
 
@@ -20,8 +20,8 @@ Una plataforma de inteligencia artificial para predecir la demanda de entradas d
 
 <br>
 
-**[Explorar el simulador](#-funcionalidades)** ·
-**[Ver resultados](#-resultados-experimentales)** ·
+**[Funcionalidades](#-funcionalidades)** ·
+**[Resultados](#-resultados-experimentales)** ·
 **[Instalación](#-instalación-y-ejecución)** ·
 **[Metodología](#-metodología)**
 
@@ -31,17 +31,17 @@ Una plataforma de inteligencia artificial para predecir la demanda de entradas d
 
 ## 💡 El proyecto
 
-**¿Cuál es el precio adecuado para una entrada deportiva?**
+### ¿Cuál es el precio adecuado para una entrada deportiva?
 
 Un precio demasiado bajo puede desaprovechar oportunidades de ingresos. Uno demasiado elevado puede reducir la demanda y dejar entradas sin vender.
 
-Además, la decisión depende de muchos factores:
+Además, la decisión depende de factores como:
 
 - El interés y la importancia del evento.
 - Los días que faltan hasta su celebración.
 - La disponibilidad de entradas.
 - El precio actual y el rango permitido.
-- Las características del deporte y de la categoría de entrada.
+- Las características del deporte y la categoría de entrada.
 
 **STADIUM IQ** estudia este problema mediante Machine Learning, optimización y simulación.
 
@@ -74,13 +74,11 @@ La plataforma contiene cuatro secciones principales.
 
 ### 01 — Inicio
 
-Una visión general del proyecto y de su metodología.
-
-Desde aquí se puede acceder a las diferentes herramientas de la plataforma.
+Presentación general del proyecto y acceso a las diferentes herramientas de STADIUM IQ.
 
 ### 02 — Simulador de precios
 
-La funcionalidad principal de STADIUM IQ.
+La funcionalidad principal de la plataforma.
 
 Permite:
 
@@ -89,7 +87,7 @@ Permite:
 - Elegir los días restantes hasta el evento.
 - Modificar el inventario y explorar escenarios hipotéticos.
 - Obtener recomendaciones de precios mediante XGBoost.
-- Comparar ingresos previstos con el precio actual y el recomendado.
+- Comparar los ingresos previstos con el precio actual y el recomendado.
 - Visualizar curvas de precio, demanda e ingresos.
 
 El precio recomendado maximiza los ingresos **estimados para el siguiente período comercial** dentro del rango evaluado.
@@ -102,14 +100,14 @@ Se mantiene para mostrar la evolución de STADIUM IQ desde el enfoque inicial ha
 
 ### 04 — Resultados y validación
 
-Panel de análisis experimental con:
+Panel de análisis experimental que permite consultar:
 
 - Mejora media de ingresos simulados.
 - Resultados por deporte.
 - Estabilidad entre repeticiones.
 - Evolución de ingresos acumulados.
 - Comparación del inventario restante.
-- Identificación de situaciones con entradas agotadas.
+- Situaciones con entradas agotadas.
 
 ---
 
@@ -121,7 +119,7 @@ flowchart TD
     B --> C["Modelo XGBoost"]
     D["Precios candidatos"] --> C
     C --> E["Predicción de ventas"]
-    E --> F["Ingresos estimados = Precio × Ventas"]
+    E --> F["Cálculo de ingresos estimados"]
     F --> G["Selección del mejor precio"]
     G --> H["Recomendación en STADIUM IQ"]
 ```
@@ -137,7 +135,7 @@ El sistema utiliza dos enfoques:
 
 El modelo de tasa de ventas se utiliza por defecto en el simulador multideporte.
 
-### Optimización
+### Optimización de precios
 
 Para cada precio candidato:
 
@@ -149,15 +147,15 @@ Para cada precio candidato:
 
 La función objetivo es:
 
-\[
-R(p)=p\cdot\hat{D}(p)
-\]
+$$
+R(p) = p \cdot \hat{D}(p)
+$$
 
 Donde:
 
-- \(p\): precio de la entrada.
-- \(\hat{D}(p)\): demanda estimada por el modelo para ese precio.
-- \(R(p)\): ingresos previstos.
+- $p$: precio de la entrada.
+- $\hat{D}(p)$: demanda estimada por el modelo para ese precio.
+- $R(p)$: ingresos previstos.
 
 El modelo predictivo es una aproximación aprendida a partir de datos sintéticos, no una estimación causal demostrada de elasticidad-precio.
 
@@ -174,7 +172,7 @@ Para evaluar la estrategia de Dynamic Pricing se compararon dos políticas:
 
 La evaluación utiliza el generador sintético de demanda para producir las ventas, en lugar de utilizar directamente las predicciones de XGBoost como resultados.
 
-### Resultados de la evaluación
+### Resultados principales
 
 <div align="center">
 
@@ -188,7 +186,7 @@ La evaluación utiliza el generador sintético de demanda para producir las vent
 
 </div>
 
-Los resultados corresponden a la evaluación experimental con números aleatorios compartidos entre las dos políticas.
+Los resultados corresponden a la evaluación experimental con condiciones aleatorias compartidas entre las dos políticas.
 
 ### Diseño del experimento
 
@@ -217,7 +215,7 @@ Los resultados completos se encuentran en:
 
 ## 🔬 Metodología
 
-El proyecto sigue cuatro etapas.
+El proyecto sigue cuatro etapas:
 
 ```mermaid
 flowchart LR
@@ -230,11 +228,11 @@ flowchart LR
 
 Se utiliza un dataset sintético de eventos deportivos, categorías y observaciones temporales.
 
-Archivo:
+Archivo principal:
 
 `dataset_multideporte_EQUIPO.csv`
 
-El generador se conserva en:
+Generador de datos:
 
 `generar_dataset.py`
 
@@ -244,19 +242,19 @@ Se entrenan modelos XGBoost utilizando las características del evento, el inven
 
 Se separan los datos por evento para evitar mezclar observaciones temporales del mismo evento entre entrenamiento y evaluación.
 
-Código:
+Código principal:
 
 `multisport_v7.py`
 
 ### 3. Optimización
 
-El algoritmo evalúa precios candidatos y escoge el que produce los mayores ingresos previstos durante el siguiente día comercial.
+El algoritmo evalúa precios candidatos y escoge el que produce los mayores ingresos previstos durante el siguiente período comercial.
 
 ### 4. Validación
 
 Se simula la evolución de ventas e inventario bajo estrategias de precio fijo y dinámico.
 
-La evaluación final utiliza factores aleatorios compartidos para mejorar la comparabilidad entre políticas.
+La evaluación utiliza factores aleatorios compartidos para mejorar la comparabilidad entre políticas.
 
 Código:
 
@@ -331,7 +329,7 @@ cd ..
 
 La aplicación utiliza tres servicios que deben ejecutarse simultáneamente.
 
-**Terminal 1 — Backend del simulador original**
+### Terminal 1 — Backend del simulador original
 
 Desde la raíz del proyecto:
 
@@ -339,7 +337,7 @@ Desde la raíz del proyecto:
 python -m uvicorn main:app --reload --port 8000
 ```
 
-**Terminal 2 — Backend multideporte**
+### Terminal 2 — Backend multideporte
 
 Desde la raíz del proyecto:
 
@@ -347,7 +345,7 @@ Desde la raíz del proyecto:
 python -m uvicorn api_multisport_v7:app --reload --port 8001
 ```
 
-**Terminal 3 — Frontend**
+### Terminal 3 — Frontend
 
 ```powershell
 cd frontend
@@ -356,7 +354,7 @@ npm run dev
 
 Abre la plataforma en:
 
-### http://localhost:5173/
+**http://localhost:5173/**
 
 ### Navegación
 
@@ -450,15 +448,15 @@ Para actualizar los resultados que muestra la aplicación, copia los archivos de
 
 STADIUM IQ es un prototipo académico y debe interpretarse dentro de su alcance experimental.
 
-**Datos sintéticos.** No se han utilizado transacciones reales de consumidores para demostrar el rendimiento comercial.
+**Datos sintéticos:** no se han utilizado transacciones reales de consumidores para demostrar el rendimiento comercial.
 
-**Elasticidad-precio.** El modelo predice demanda a diferentes precios, pero esto no equivale a identificar causalmente cómo responderían los compradores ante cambios reales de precio.
+**Elasticidad-precio:** el modelo predice demanda a diferentes precios, pero esto no equivale a identificar causalmente cómo responderían los compradores ante cambios reales de precio.
 
-**Validación limitada.** Las repeticiones mantienen un mismo modelo y conjunto de eventos de prueba; permiten estudiar la variabilidad del simulador, pero no garantizan generalización.
+**Validación limitada:** las repeticiones mantienen un mismo modelo y conjunto de eventos de prueba. Permiten estudiar la variabilidad del simulador, pero no garantizan generalización.
 
-**Optimización diaria.** La política dinámica evalúa el mejor precio estimado para cada día. No resuelve todavía la optimización conjunta de los ingresos de todo el horizonte de venta.
+**Optimización diaria:** la política dinámica evalúa el mejor precio estimado para cada día. No resuelve todavía la optimización conjunta de los ingresos de todo el horizonte de venta.
 
-**Entorno simulado.** Los resultados dependen de los supuestos de la función sintética de demanda.
+**Entorno simulado:** los resultados dependen de los supuestos de la función sintética de demanda.
 
 ---
 
