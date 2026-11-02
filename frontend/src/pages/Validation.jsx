@@ -1,4 +1,4 @@
-﻿
+
 import React, { useEffect, useMemo, useState } from "react";
 
 import {
@@ -17,7 +17,7 @@ import {
 import "./Validation.css";
 
 const SPORT_NAMES = {
-  football: "FÃºtbol",
+  football: "Fútbol",
   basketball: "Baloncesto",
   tennis: "Tenis",
   running: "Running"
@@ -253,7 +253,7 @@ export default function Validation() {
         unique.set(key, {
           key,
           label:
-            `${record.event_id} Â· ${record.ticket_category_id}`
+            `${record.event_id} · ${record.ticket_category_id}`
         });
       }
     });
@@ -332,7 +332,7 @@ export default function Validation() {
           STADIUM IQ / VALIDACIÃ“N
         </div>
 
-        <h1>Â¿Funciona el precio dinÃ¡mico?</h1>
+        <h1>¿Funciona el precio dinámico?</h1>
 
         <p>
           Comparamos precios fijos frente a ajustes
@@ -342,7 +342,7 @@ export default function Validation() {
 
       {loading && (
         <div className="validation-notice">
-          Cargando resultados de validaciÃ³n...
+          Cargando resultados de validación...
         </div>
       )}
 
@@ -371,7 +371,7 @@ export default function Validation() {
               </strong>
 
               <small>
-                Precio dinÃ¡mico frente a precio fijo
+                Precio dinámico frente a precio fijo
               </small>
             </article>
 
@@ -389,7 +389,7 @@ export default function Validation() {
             </article>
 
             <article className="validation-kpi">
-              <span>CategorÃ­as ganadoras</span>
+              <span>Categorías ganadoras</span>
 
               <strong>
                 {number(
@@ -400,7 +400,7 @@ export default function Validation() {
               </strong>
 
               <small>
-                Promedio por repeticiÃ³n
+                Promedio por repetición
               </small>
             </article>
 
@@ -415,7 +415,7 @@ export default function Validation() {
               </strong>
 
               <small>
-                DesviaciÃ³n estÃ¡ndar de la mejora
+                Desviación estándar de la mejora
               </small>
             </article>
           </section>
@@ -482,7 +482,7 @@ export default function Validation() {
               <h2>Estabilidad de los resultados</h2>
 
               <p>
-                Mejora obtenida en cada repeticiÃ³n.
+                Mejora obtenida en cada repetición.
               </p>
 
               {repetitionData.length ? (
@@ -548,17 +548,17 @@ export default function Validation() {
       <section className="validation-panel validation-wide">
         <div className="validation-panel-top">
           <div>
-            <h2>EvoluciÃ³n durante la venta</h2>
+            <h2>Evolución durante la venta</h2>
 
             <p>
-              ComparaciÃ³n de las dos estrategias
-              para un evento y categorÃ­a.
+              Comparación de las dos estrategias
+              para un evento y categoría.
             </p>
           </div>
 
           {categories.length > 0 && (
             <label className="validation-select-label">
-              Evento y categorÃ­a
+              Evento y categoría
 
               <select
                 value={chosen}
@@ -588,7 +588,7 @@ export default function Validation() {
               </div>
 
               <div>
-                <span>Ingresos con precio dinÃ¡mico</span>
+                <span>Ingresos con precio dinámico</span>
                 <strong>{euro(finalDynamic)}</strong>
               </div>
 
@@ -736,7 +736,7 @@ export default function Validation() {
                         ? "ingresosDinamicos"
                         : "stockDinamico"
                     }
-                    name="Precio dinÃ¡mico"
+                    name="Precio dinámico"
                     stroke="#ac96ff"
                     strokeWidth={3}
                     dot={false}
@@ -761,7 +761,7 @@ export default function Validation() {
               </div>
 
               <div>
-                <strong>Precio dinÃ¡mico</strong>
+                <strong>Precio dinámico</strong>
                 <span>
                   {dynamicSoldOut
                     ? `Entradas agotadas en la jornada ${dynamicSoldOut.jornada}`
@@ -777,30 +777,30 @@ export default function Validation() {
               Cuando una estrategia agota las entradas,
               su inventario permanece en cero y sus
               ingresos acumulados permanecen constantes.
-              Se conserva el Ãºltimo resultado de la
-              simulaciÃ³n hasta el final del perÃ­odo.
+              Se conserva el último resultado de la
+              simulación hasta el final del período.
             </p>
           </>
         ) : (
           <div className="validation-placeholder">
             Copia v8_2_detalle.csv en
             frontend/public/validation/ para
-            visualizar la evoluciÃ³n diaria.
+            visualizar la evolución diaria.
           </div>
         )}
       </section>
 
       <footer className="validation-footer">
-        <strong>InterpretaciÃ³n de los resultados</strong>
+        <strong>Interpretación de los resultados</strong>
 
         <p>
-          EvaluaciÃ³n con datos sintÃ©ticos. Se han
+          Evaluación con datos sintéticos. Se han
           utilizado factores aleatorios compartidos
-          entre las dos polÃ­ticas para mejorar la
+          entre las dos políticas para mejorar la
           comparabilidad. Las repeticiones mantienen
           los mismos eventos de prueba y el mismo
-          modelo XGBoost. La estrategia dinÃ¡mica
-          maximiza ingresos previstos de cada dÃ­a,
+          modelo XGBoost. La estrategia dinámica
+          maximiza ingresos previstos de cada día,
           no necesariamente los ingresos totales
           del evento.
         </p>
