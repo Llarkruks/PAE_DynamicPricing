@@ -1,7 +1,6 @@
 
 import React, {
   useEffect,
-  useMemo,
   useState
 } from "react";
 
@@ -46,7 +45,10 @@ const categoryName = value => ({
   general: "Entrada general",
   premium: "Entrada premium",
   vip: "Entrada VIP",
-  standard: "Entrada estándar"
+  standard: "Entrada estándar",
+  premium_registration: "Inscripción premium",
+  day_session: "Sesión de día",
+  evening_session: "Sesión de tarde"
 }[String(value).toLowerCase()] || String(value));
 
 function Icon({ name, size = 20 }) {
@@ -72,127 +74,81 @@ function Card({ title, value, detail }) {
 }
 
 export default function Multisport() {
-  const [items, setItems] = useState([]);
   const [sport, setSport] = useState("football");
-  const [event, setEvent] = useState("");
-  const [category, setCategory] = useState("");
   const [days, setDays] = useState(30);
   const [model, setModel] = useState("rate");
   const [chart, setChart] = useState("revenue");
 
-  const [context, setContext] = useState(null);
-  const [stock, setStock] = useState(null);
   const [result, setResult] = useState(null);
 
   const [loading, setLoading] = useState(false);
-  const [loadingContext, setLoadingContext] = useState(false);
   const [error, setError] = useState("");
 
   const [advanced, setAdvanced] = useState(false);
+  const [customCategories, setCustomCategories] = useState([]);
+  const [customCategory, setCustomCategory] = useState("");
+  const [eventName, setEventName] = useState("Mi evento deportivo");
+  const [custom, setCustom] = useState({
+    category_capacity: 1000, remaining_capacity: 800,
+    current_price: 40, popularity_index: 0.5, event_importance: 0.5
+  });
+  const updateCustom = (key, value) => {
+    setCustom(previous => ({ ...previous, [key]: value }));
+    setResult(null);
+  };
+
 
   useEffect(() => {
-    axios.get(`${API}/api/v7/config`)
-      .then(response => {
-        setItems(response.data.events || []);
-      })
-      .catch(() => {
-        setError(
-          "No responde la API del puerto 8001."
-        );
-      });
+    axios.get(`${API}/api/v7/custom/config`)
+      .then(response => setCustomCategories(response.data.categories || []))
+      .catch(() => {});
   }, []);
 
-  const events = useMemo(
-    () => [...new Set(
-      items
-        .filter(x => x.sport_type === sport)
-        .map(x => x.event_id)
-    )].sort(),
-    [items, sport]
-  );
+  const availableCustomCategories = customCategories
+    .filter(x => x.sport_type === sport)
+    .map(x => x.ticket_category);
+  const activeCustomCategory = availableCustomCategories.includes(customCategory)
+    ? customCategory : availableCustomCategories[0] || "";
 
-  const selectedEvent = events.includes(event)
-    ? event
-    : events[0] || "";
-
-  const categories = useMemo(
-    () => items.filter(
-      x =>
-        x.sport_type === sport &&
-        x.event_id === selectedEvent
-    ),
-    [items, sport, selectedEvent]
-  );
-
-  const selectedCategory = categories.some(
-    x => x.ticket_category_id === category
-  )
-    ? category
-    : categories[0]?.ticket_category_id || "";
-
-  // Recuperar el estado inicial del snapshot.
   useEffect(() => {
-    if (!selectedEvent || !selectedCategory) return;
-
-    let cancelled = false;
-
-    setContext(null);
-    setStock(null);
-    setResult(null);
-    setError("");
-    setLoadingContext(true);
-
-    axios.get(`${API}/api/v7/context`, {
-      params: {
-        event_id: selectedEvent,
-        ticket_category_id: selectedCategory,
-        days_remaining: Number(days)
-      }
-    }).then(response => {
-      if (!cancelled) {
-        setContext(response.data);
-        setStock(response.data.remaining_capacity);
-      }
+    if (!activeCustomCategory) return;
+    let canceled = false;
+    axios.get(`${API}/api/v7/custom/defaults`, { params: {
+      sport_type: sport, ticket_category: activeCustomCategory,
+      days_remaining: 30
+    }}).then(response => {
+      if (!canceled) setCustom(response.data);
     }).catch(() => {
-      if (!cancelled) {
-        setError(
-          "No se ha podido cargar el estado del evento."
-        );
-      }
-    }).finally(() => {
-      if (!cancelled) {
-        setLoadingContext(false);
-      }
+      if (!canceled) setError("No se pudieron cargar los valores de referencia.");
     });
+    return () => { canceled = true; };
+  }, [sport, activeCustomCategory]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedEvent, selectedCategory, days]);
-
-  // Una prediccion anterior deja de ser valida
-  // si cambiamos el modelo o el inventario.
   useEffect(() => {
     setResult(null);
-  }, [stock, model]);
-
-  const capacity = context?.category_capacity ?? 0;
-  const originalStock =
-    context?.remaining_capacity ?? 0;
-
-  const currentStock = stock ?? 0;
-
-  const occupancy = capacity > 0
-    ? (1 - currentStock / capacity) * 100
-    : 0;
-
-  const hypothetical =
-    context !== null && currentStock !== originalStock;
+  }, [sport, days, activeCustomCategory, model]);
 
   async function calculate(e) {
     e.preventDefault();
 
-    if (!context || stock === null) return;
+    const capacity = Number(custom.category_capacity);
+    const remaining = Number(custom.remaining_capacity);
+    const currentPrice = Number(custom.current_price);
+
+    if (!activeCustomCategory ||
+        !Number.isFinite(capacity) ||
+        capacity <= 0 ||
+        !Number.isInteger(capacity) ||
+        !Number.isFinite(remaining) ||
+        !Number.isInteger(remaining) ||
+        remaining < 0 ||
+        remaining > capacity ||
+        !Number.isFinite(currentPrice) ||
+        currentPrice <= 0 ||
+        !eventName.trim()) {
+      setError("Revisa el nombre, precio, aforo y entradas disponibles.");
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -200,17 +156,26 @@ export default function Multisport() {
 
     try {
       const response = await axios.post(
-        `${API}/api/v7/optimize`,
+        `${API}/api/v7/custom/optimize`,
         {
-          event_id: selectedEvent,
-          ticket_category_id: selectedCategory,
+          sport_type: sport,
+          ticket_category: activeCustomCategory,
           days_remaining: Number(days),
+          event_name: eventName.trim(),
           model,
-          remaining_capacity: Number(stock)
+          ...Object.fromEntries(
+            Object.entries(custom).map(([key, value]) => [
+              key,
+              key === "tournament_round"
+                ? value
+                : (value == null ? null : Number(value))
+            ])
+          )
         }
       );
 
       setResult(response.data);
+
     } catch (err) {
       const detail = err.response?.data?.detail;
 
@@ -268,7 +233,6 @@ export default function Multisport() {
       <div className="ms-layout">
         <aside className="ms-panel ms-form">
           <h2>Configura tu evento</h2>
-
           <form onSubmit={calculate}>
             <label className="ms-label">
               01 / Deporte
@@ -286,8 +250,6 @@ export default function Multisport() {
                   }
                   onClick={() => {
                     setSport(id);
-                    setEvent("");
-                    setCategory("");
                   }}
                 >
                   <Icon name={icon} size={26} />
@@ -298,43 +260,44 @@ export default function Multisport() {
 
             <div className="ms-divider" />
 
+            <label className="ms-label">Nombre del evento</label>
+
+            <input
+              className="ms-text-field"
+              type="text"
+              maxLength={100}
+              required
+              value={eventName}
+              onChange={e => {
+                setEventName(e.target.value);
+                setResult(null);
+              }}
+              placeholder="Ej. Final del torneo de mi ciudad"
+            />
+
             <label className="ms-label">
-              02 / Evento deportivo
+              02 / Tipo de entrada
             </label>
 
             <select
-              value={selectedEvent}
+              value={activeCustomCategory}
               onChange={e => {
-                setEvent(e.target.value);
-                setCategory("");
+                setCustomCategory(e.target.value);
+                setResult(null);
               }}
             >
-              {events.map(id => (
-                <option key={id} value={id}>
-                  {`Evento ${Number(
-                    id.replace("EV", "")
-                  )} (simulado)`}
+              {availableCustomCategories.map(c => (
+                <option key={c} value={c}>
+                  {categoryName(c)}
                 </option>
               ))}
             </select>
 
-            <label className="ms-label">
-              Tipo de entrada
-            </label>
-
-            <select
-              value={selectedCategory}
-              onChange={e => setCategory(e.target.value)}
-            >
-              {categories.map(item => (
-                <option
-                  key={item.ticket_category_id}
-                  value={item.ticket_category_id}
-                >
-                  {categoryName(item.ticket_category)}
-                </option>
-              ))}
-            </select>
+            <p className="ms-muted">
+              Escenario nuevo. Las variables no indicadas
+              utilizan un perfil sintético de referencia
+              del deporte seleccionado.
+            </p>
 
             <div className="ms-divider" />
 
@@ -366,78 +329,83 @@ export default function Multisport() {
               04 / Entradas disponibles
             </label>
 
-            {loadingContext || !context ? (
-              <p className="ms-muted">
-                Cargando inventario...
-              </p>
-            ) : (
-              <>
-                <div className="ms-slider-title">
-                  <span>Disponibles actualmente</span>
-                  <strong>
-                    {fmt(currentStock, 0)}
-                  </strong>
+            <div className="ms-custom-fields">
+                <label className="ms-label">Aforo de esta categoría</label>
+                <input type="number" min="1" max="100000" required
+                  value={custom.category_capacity}
+                  onChange={e => updateCustom("category_capacity", e.target.value)} />
+                <label className="ms-label">Entradas disponibles actualmente</label>
+                <input type="number" min="0" max={custom.category_capacity} required
+                  value={custom.remaining_capacity}
+                  onChange={e => updateCustom("remaining_capacity", e.target.value)} />
+                <label className="ms-label">Precio actual (€)</label>
+                <input type="number" min="0.01" step="0.01" max="10000" required
+                  value={custom.current_price}
+                  onChange={e => updateCustom("current_price", e.target.value)} />
+                <label className="ms-label">Popularidad esperada</label>
+                <select value={String(custom.popularity_index)}
+                  onChange={e => updateCustom("popularity_index", Number(e.target.value))}>
+                  <option value="0.25">Baja</option><option value="0.55">Media</option>
+                  <option value="0.85">Alta</option>
+                  {! [0.25,0.55,0.85].includes(Number(custom.popularity_index)) &&
+                    <option value={String(custom.popularity_index)}>Referencia ({fmt(custom.popularity_index,2)})</option>}
+                </select>
+                <label className="ms-label">Importancia del evento</label>
+                <select value={String(custom.event_importance)}
+                  onChange={e => updateCustom("event_importance", Number(e.target.value))}>
+                  <option value="0.25">Baja</option><option value="0.55">Media</option>
+                  <option value="0.85">Alta</option>
+                  {! [0.25,0.55,0.85].includes(Number(custom.event_importance)) &&
+                    <option value={String(custom.event_importance)}>Referencia ({fmt(custom.event_importance,2)})</option>}
+                </select>
+                <p className="ms-muted">Baja = 0,25 · Media = 0,55 · Alta = 0,85. Son índices del modelo, no categorías comerciales validadas.</p>
+                <div className="ms-sport-details">
+                  <h3>Características de {SPORTS.find(x => x[0] === sport)?.[1]}</h3>
+                  {sport === "football" && <>
+                    <label className="ms-label">Rivalidad del partido</label>
+                    <select value={String(custom.derby_rivalry_index ?? 0.5)} onChange={e => updateCustom("derby_rivalry_index", Number(e.target.value))}>
+                      <option value="0.2">Baja</option><option value="0.5">Media</option><option value="0.85">Derbi / alta</option>
+                      {! [0.2,0.5,0.85].includes(Number(custom.derby_rivalry_index ?? 0.5)) && <option value={String(custom.derby_rivalry_index)}>Referencia ({fmt(custom.derby_rivalry_index,2)})</option>}
+                    </select>
+                    <label className="ms-label">Posición del equipo local (1–30)</label>
+                    <input type="number" min="1" max="30" value={custom.league_position_home ?? 10} onChange={e => updateCustom("league_position_home", Number(e.target.value))} />
+                    <label className="ms-label">Posición del visitante (1–30)</label>
+                    <input type="number" min="1" max="30" value={custom.league_position_away ?? 10} onChange={e => updateCustom("league_position_away", Number(e.target.value))} />
+                  </>}
+                  {sport === "basketball" && <>
+                    <label className="ms-label">Porcentaje de victorias del equipo</label>
+                    <select value={String(custom.team_win_percentage ?? 0.5)} onChange={e => updateCustom("team_win_percentage", Number(e.target.value))}>
+                      <option value="0.25">25 %</option><option value="0.5">50 %</option><option value="0.75">75 %</option>
+                      {! [0.25,0.5,0.75].includes(Number(custom.team_win_percentage ?? 0.5)) && <option value={String(custom.team_win_percentage)}>Referencia ({fmt(100*custom.team_win_percentage,1)} %)</option>}
+                    </select>
+                  </>}
+                  {sport === "tennis" && <>
+                    <label className="ms-label">Ranking del jugador principal</label>
+                    <input type="number" min="1" max="500" value={custom.player_ranking ?? 50} onChange={e => updateCustom("player_ranking", Number(e.target.value))} />
+                    <label className="ms-label">Ronda del torneo</label>
+                    <select value={custom.tournament_round ?? "QF"} onChange={e => updateCustom("tournament_round", e.target.value)}>
+                      <option value="R32">Ronda de 32</option><option value="R16">Octavos</option>
+                      <option value="QF">Cuartos</option><option value="SF">Semifinal</option><option value="F">Final</option>
+                    </select>
+                  </>}
+                  {sport === "running" && <>
+                    <label className="ms-label">Distancia de carrera</label>
+                    <select value={String(custom.race_distance_km ?? 10)} onChange={e => updateCustom("race_distance_km", Number(e.target.value))}>
+                      <option value="5">5 km</option><option value="10">10 km</option>
+                      <option value="21.0975">Media maratón</option><option value="42.195">Maratón</option>
+                      {! [5,10,21.0975,42.195].includes(Number(custom.race_distance_km ?? 10)) && <option value={String(custom.race_distance_km)}>Referencia ({fmt(custom.race_distance_km)} km)</option>}
+                    </select>
+                    <label className="ms-label">Desnivel positivo (metros)</label>
+                    <input type="number" min="0" max="5000" value={custom.elevation_gain_m ?? 0} onChange={e => updateCustom("elevation_gain_m", Number(e.target.value))} />
+                  </>}
                 </div>
-
-                <input
-                  type="range"
-                  min={0}
-                  max={capacity}
-                  step={1}
-                  value={currentStock}
-                  onChange={e =>
-                    setStock(Number(e.target.value))
-                  }
-                />
-
-                <div className="ms-range-labels">
-                  <span>0 entradas</span>
-                  <span>
-                    Aforo: {fmt(capacity, 0)}
-                  </span>
-                </div>
-
                 <div className="ms-inventory">
-                  <div>
-                    Ocupación simulada
-                    <strong>{fmt(occupancy)} %</strong>
-                  </div>
-
-                  <div className="ms-progress">
-                    <div
-                      style={{
-                        width: `${occupancy}%`
-                      }}
-                    />
-                  </div>
-
-                  <p>
-                    Inventario original del dataset:{" "}
-                    <b>{fmt(originalStock, 0)}</b>
-                  </p>
-
-                  {hypothetical && (
-                    <p className="ms-hypothetical">
-                      <Icon name="science" size={16} />
-                      Escenario hipotético: has modificado
-                      el inventario original.
-                    </p>
-                  )}
-
-                  <button
-                    className="ms-reset"
-                    type="button"
-                    disabled={!hypothetical}
-                    onClick={() =>
-                      setStock(originalStock)
-                    }
-                  >
-                    <Icon name="restart_alt" size={17} />
-                    Restaurar inventario original
-                  </button>
+                  Ocupación estimada: <b>{Number(custom.category_capacity)>0
+                    ? fmt(Math.max(0,Math.min(100,100*(1-Number(custom.remaining_capacity)/Number(custom.category_capacity)))))
+                    : "0"} %</b>
+                  <p>El precio se evaluará entre el 80 % y el 120 % del valor indicado.</p>
                 </div>
-              </>
-            )}
+              </div>
 
             <div className="ms-divider" />
 
@@ -488,9 +456,10 @@ export default function Multisport() {
               type="submit"
               disabled={
                 loading ||
-                loadingContext ||
-                !context ||
-                stock === null
+                !activeCustomCategory ||
+                Number(custom.remaining_capacity) >
+                  Number(custom.category_capacity) ||
+                Number(custom.category_capacity) <= 0
               }
             >
               <Icon name="auto_awesome" size={19} />
@@ -501,8 +470,8 @@ export default function Multisport() {
           </form>
 
           <p className="ms-muted">
-            El inventario modificado se utiliza
-            únicamente para esta simulación.
+            Se utilizan datos sintéticos como referencia.
+            El evento no se guarda.
           </p>
         </aside>
 
@@ -579,7 +548,7 @@ export default function Multisport() {
                 <div className="ms-eyebrow">
                   RECOMENDACIÓN DEL MODELO
                 </div>
-                <p>Precio recomendado para mañana</p>
+                <p>Precio recomendado para mañana {result.context.is_custom ? "(escenario personalizado)" : ""}</p>
 
                 <div className="ms-big-price">
                   {euro(optimal.price)}
@@ -606,11 +575,12 @@ export default function Multisport() {
                     : `${result.uplift_percent >= 0 ? "+" : ""}${fmt(result.uplift_percent)} % de ingresos previstos`}
                 </div>
 
-                {result.context.is_hypothetical && (
-                  <p className="ms-hypothetical">
-                    Estás consultando un escenario
-                    con inventario modificado.
-                  </p>
+                {result.context.is_custom && <p className="ms-muted">Evento: <strong>{result.context.event_name}</strong></p>}
+                {result.diagnostics?.warnings?.length > 0 && (
+                  <div className="ms-diagnostic-alert" role="status">
+                    <strong>Precauciones sobre la recomendación</strong>
+                    <ul>{result.diagnostics.warnings.map((msg,i) => <li key={i}>{msg}</li>)}</ul>
+                  </div>
                 )}
               </div>
 
@@ -775,6 +745,16 @@ export default function Multisport() {
                   </strong>
                 </p>
 
+                {result.context.assumptions && (
+                  <div className="ms-assumptions">
+                    <h3>Supuestos del evento personalizado</h3>
+                    <ul>{result.context.assumptions.map(item => <li key={item}>{item}</li>)}</ul>
+                  </div>
+                )}
+                {result.diagnostics && <p>
+                  Tramos donde sube la demanda al subir el precio: <strong>{result.diagnostics.demand_increase_steps}</strong> de {result.diagnostics.price_points - 1}.
+                  {" "}Esta comprobación no demuestra una relación causal entre precio y ventas.
+                </p>}
                 <p>
                   Sensibilidad local:{" "}
                   <strong>
@@ -816,9 +796,7 @@ export default function Multisport() {
               Las recomendaciones son predicciones
               para un día comercial, no precios
               comercialmente validados.
-              Modificar el inventario puede producir
-              escenarios que no coinciden con las
-              condiciones históricas del dataset.
+              {"El nuevo evento combina entradas del usuario con hipótesis sintéticas."}
             </p>
           )}
         </section>

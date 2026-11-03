@@ -478,3 +478,24 @@
     align-items: flex-start;
   }
 }
+
+/* Modo de escenarios personalizados */
+.ms-mode-picker {display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:14px 0 20px;}
+.ms-mode-picker button {background:#222e47;border:1px solid #43516e;color:#dce5ff;
+  border-radius:8px;padding:10px 5px;cursor:pointer;font-size:12px;}
+.ms-mode-picker button.active {background:#393060;border-color:#b3a0ff;color:white;}
+.ms-custom-fields {display:flex;flex-direction:column;gap:9px;}
+.ms-custom-fields input[type=number] {background:#222e47;border:1px solid #465775;color:#fff;
+  border-radius:7px;padding:10px;width:100%;box-sizing:border-box;}
+.ms-assumptions {background:rgba(139,124,246,.09);border:1px solid #5b537e;
+  border-radius:10px;padding:10px 15px;margin:18px 0;}
+.ms-assumptions li {margin:7px 0;line-height:1.4;}
+
+/* STADIUM IQ: formulario de evento personalizado y diagnostico */
+.ms-form .ms-text-field {width:100%;background:#222e47;border:1px solid #465775;color:#fff;border-radius:7px;padding:11px;}
+.ms-sport-details {margin-top:16px;border-top:1px solid #425171;padding-top:6px;}
+.ms-sport-details h3 {font-size:13px;color:#d5caff;margin:12px 0;}
+.ms-diagnostic-alert {background:rgba(238,180,73,.1);border:1px solid rgba(238,180,73,.5);border-radius:10px;padding:12px 16px;margin-top:16px;font-size:12px;line-height:1.6;}
+.ms-diagnostic-alert strong {color:#ffd58a;}
+.ms-diagnostic-alert ul {padding-left:18px;margin:8px 0 0;}
+.ms-diagnostic-alert li {margin-top:5px;}

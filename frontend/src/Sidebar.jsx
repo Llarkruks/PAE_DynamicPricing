@@ -12,7 +12,7 @@ const navigation = [
   {
     path: "/multisport",
     icon: "tune",
-    label: "Simulador de precios"
+    label: "Simulador multideporte"
   },
   {
     path: "/simulator",
