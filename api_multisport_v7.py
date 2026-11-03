@@ -11,6 +11,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from config_deportes import variables_deporte
 
 from multisport_v7 import (
     ARTIFACT,
@@ -583,13 +584,7 @@ def optimize_custom(req: CustomPrediction):
         raise HTTPException(422, "Las disponibles no pueden superar el aforo")
     row = custom_template(req.sport_type, req.ticket_category, req.days_remaining)
     # Solo se alteran atributos pertenecientes al deporte seleccionado.
-    sport_features = {
-        "football": ("derby_rivalry_index", "league_position_home", "league_position_away"),
-        "basketball": ("team_win_percentage",),
-        "tennis": ("player_ranking", "tournament_round"),
-        "running": ("race_distance_km", "elevation_gain_m"),
-    }
-    for field in sport_features[req.sport_type]:
+    for field in variables_deporte(req.sport_type):
         value = getattr(req, field)
         if value is not None:
             row[field] = value
