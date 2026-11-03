@@ -65,6 +65,7 @@ class CustomPrediction(BaseModel):
     category_capacity: int = Field(ge=1, le=100000)
     remaining_capacity: int = Field(ge=0, le=100000)
     current_price: float = Field(gt=0, le=10000)
+    reference_price: float | None = Field(default=None, gt=0, le=10000)
     popularity_index: float = Field(ge=0, le=1)
     event_importance: float = Field(ge=0, le=1)
     event_name: str = Field(default="Mi evento", max_length=100)
@@ -563,6 +564,7 @@ def custom_defaults(
         "category_capacity": int(row["category_capacity"]),
         "remaining_capacity": int(row["remaining_capacity"]),
         "current_price": round(float(row["base_price"]), 2),
+        "reference_price": round(float(row["base_price"]), 2),
         "popularity_index": round(float(row["popularity_index"]), 3),
         "event_importance": round(float(row["event_importance"]), 3),
         "derby_rivalry_index": safe_optional_number(row, "derby_rivalry_index"),
@@ -592,10 +594,11 @@ def optimize_custom(req: CustomPrediction):
     row["ticket_category_id"] = "CUSTOM_CATEGORY"
     row["category_capacity"] = req.category_capacity
     row["total_capacity"] = req.category_capacity  # aprox.: una sola categoria
-    row["base_price"] = req.current_price
+    reference_price = req.reference_price if req.reference_price is not None else req.current_price
+    row["base_price"] = reference_price
     row["current_price"] = req.current_price
-    row["min_price"] = round(req.current_price * 0.8, 4)
-    row["max_price"] = round(req.current_price * 1.2, 4)
+    row["min_price"] = round(reference_price * 0.8, 4)
+    row["max_price"] = round(reference_price * 1.2, 4)
     row["popularity_index"] = req.popularity_index
     row["event_importance"] = req.event_importance
     # Evitar importar ventas de otro evento: son supuestos neutros.
@@ -613,7 +616,7 @@ def optimize_custom(req: CustomPrediction):
             "Evento nuevo: las variables no introducidas usan un perfil sintetico representativo de ese deporte y categoria.",
             "Se supone que el aforo total coincide con el de esta categoria.",
             "Se supone que las ventas del periodo anterior son cero, al no disponer de historial.",
-            "El precio actual actua como precio base; se explora del 80% al 120% de ese precio.",
+            "El precio de referencia determina el rango de busqueda del 80% al 120%.",
             "La recomendacion corresponde solo al siguiente dia, no al total del evento.",
         ],
     })
@@ -624,6 +627,7 @@ def optimize_custom(req: CustomPrediction):
     pmin = float(candidates["current_price"].min())
     pmax = float(candidates["current_price"].max())
     output["context"]["observed_price_reference_range"] = [round(pmin, 2), round(pmax, 2)]
+    output["context"]["reference_price"] = float(reference_price)
     if req.current_price < pmin or req.current_price > pmax:
         output.setdefault("diagnostics", {"warnings": []})["warnings"].append(
             f"El precio introducido ({req.current_price:.2f}) queda fuera de "

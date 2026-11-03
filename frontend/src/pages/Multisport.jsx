@@ -90,7 +90,7 @@ export default function Multisport() {
   const [eventName, setEventName] = useState("Mi evento deportivo");
   const [custom, setCustom] = useState({
     category_capacity: 1000, remaining_capacity: 800,
-    current_price: 40, popularity_index: 0.5, event_importance: 0.5
+    current_price: 40, reference_price: 40, popularity_index: 0.5, event_importance: 0.5
   });
   const updateCustom = (key, value) => {
     setCustom(previous => ({ ...previous, [key]: value }));
@@ -147,6 +147,13 @@ export default function Multisport() {
         currentPrice <= 0 ||
         !eventName.trim()) {
       setError("Revisa el nombre, precio, aforo y entradas disponibles.");
+      return;
+    }
+
+    const referencePrice = Number(custom.reference_price);
+    if (custom.reference_price === "" || !Number.isFinite(referencePrice) ||
+        referencePrice <= 0 || referencePrice > 10000) {
+      setError("Introduce un precio de referencia valido.");
       return;
     }
 
@@ -338,6 +345,10 @@ export default function Multisport() {
                 <input type="number" min="0" max={custom.category_capacity} required
                   value={custom.remaining_capacity}
                   onChange={e => updateCustom("remaining_capacity", e.target.value)} />
+                <label className="ms-label">Precio de referencia del evento (EUR)</label>
+                <input type="number" min="0.01" max="10000" step="0.01" required
+                  value={custom.reference_price ?? ""}
+                  onChange={e => updateCustom("reference_price", e.target.value)} />
                 <label className="ms-label">Precio actual (€)</label>
                 <input type="number" min="0.01" step="0.01" max="10000" required
                   value={custom.current_price}
@@ -403,7 +414,7 @@ export default function Multisport() {
                   Ocupación estimada: <b>{Number(custom.category_capacity)>0
                     ? fmt(Math.max(0,Math.min(100,100*(1-Number(custom.remaining_capacity)/Number(custom.category_capacity)))))
                     : "0"} %</b>
-                  <p>El precio se evaluará entre el 80 % y el 120 % del valor indicado.</p>
+                  <p>El precio se evaluará entre el 80 % y el 120 % del precio de referencia.</p>
                 </div>
               </div>
 
