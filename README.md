@@ -244,7 +244,7 @@ Se separan los datos por evento para evitar mezclar observaciones temporales del
 
 Código principal:
 
-`multisport_v7.py`
+`multisport_model.py`
 
 ### 3. Optimización
 
@@ -342,7 +342,7 @@ python -m uvicorn main:app --reload --port 8000
 Desde la raíz del proyecto:
 
 ```powershell
-python -m uvicorn api_multisport_v7:app --reload --port 8001
+python -m uvicorn api_multisport:app --reload --port 8001
 ```
 
 ### Terminal 3 — Frontend
@@ -389,10 +389,10 @@ PAE_DynamicPricing/
 ├── data_loader.py
 ├── train_model.py
 │
-├── api_multisport_v7.py
-├── multisport_v7.py
-├── multisport_v7_model.joblib
-├── multisport_v7_metrics.json
+├── api_multisport.py
+├── multisport_model.py
+├── multisport_model.joblib
+├── multisport_model_metrics.json
 │
 ├── dataset_multideporte_EQUIPO.csv
 ├── generar_dataset.py
@@ -416,7 +416,7 @@ Los comandos se ejecutan desde la raíz del proyecto, con el entorno virtual act
 ### Entrenamiento multideporte
 
 ```powershell
-python multisport_v7.py train
+python multisport_model.py train
 ```
 
 ### Validación predictiva

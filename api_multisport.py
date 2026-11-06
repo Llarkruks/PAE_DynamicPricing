@@ -20,7 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from config_deportes import variables_deporte
 
-from multisport_v7 import (
+from multisport_model import (
     ARTIFACT,
     encode_features,
     load_dataset,
@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
     init_auth_db()
     if not ARTIFACT.exists():
         raise RuntimeError(
-            "Primero ejecuta: python multisport_v7.py train"
+            "Primero ejecuta: python multisport_model.py train"
         )
 
     DATA = load_dataset()

@@ -2,8 +2,8 @@
 """V7: experimento multideporte independiente del simulador V6.
 
 Uso:
-    python multisport_v7.py train
-    python multisport_v7.py simulate --sport football --event EV0001 --category 1
+    python multisport_model.py train
+    python multisport_model.py simulate --sport football --event EV0001 --category 1
 """
 
 import argparse
@@ -20,8 +20,8 @@ from xgboost import XGBRegressor
 
 ROOT = Path(__file__).resolve().parent
 CSV = ROOT / "dataset_multideporte_EQUIPO.csv"
-ARTIFACT = ROOT / "multisport_v7_model.joblib"
-REPORT = ROOT / "multisport_v7_metrics.json"
+ARTIFACT = ROOT / "multisport_model.joblib"
+REPORT = ROOT / "multisport_model_metrics.json"
 
 NUMERIC = [
     "days_remaining", "popularity_index", "event_importance",
@@ -235,7 +235,7 @@ def train():
 def simulate(sport, event, category, mode):
     if not ARTIFACT.exists():
         raise FileNotFoundError(
-            "Primero ejecuta: python multisport_v7.py train"
+            "Primero ejecuta: python multisport_model.py train"
         )
 
     df = load_dataset()

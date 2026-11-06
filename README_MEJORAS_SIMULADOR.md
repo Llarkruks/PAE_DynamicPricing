@@ -2,7 +2,7 @@
 
 Se conservan el simulador original y el dataset de entrenamiento. La actualización afecta a:
 
-- `api_multisport_v7.py`: campos específicos por deporte, nombre del evento, comprobaciones de curva, aviso de precio fuera del rango de precios sintéticos vistos para deporte/categoría y advertencias de recomendación en extremos.
+- `api_multisport.py`: campos específicos por deporte, nombre del evento, comprobaciones de curva, aviso de precio fuera del rango de precios sintéticos vistos para deporte/categoría y advertencias de recomendación en extremos.
 - `frontend/src/pages/Multisport.jsx`: nombre de evento, selectores baja/media/alta, parámetros específicos de fútbol, baloncesto, tenis y running, diagnóstico visible.
 - `frontend/src/pages/Multisport.css`: estilos.
 - `test_escenarios_personalizados.py`: prueba rápida sin arrancar navegador.
@@ -13,7 +13,7 @@ Desde la raíz del proyecto:
 
 ```powershell
 python test_escenarios_personalizados.py
-python -m uvicorn api_multisport_v7:app --reload --port 8001
+python -m uvicorn api_multisport:app --reload --port 8001
 ```
 
 En otra terminal:
