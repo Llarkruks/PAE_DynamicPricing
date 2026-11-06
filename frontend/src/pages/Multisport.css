@@ -647,8 +647,19 @@
 }
 
 .ms-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 14px 16px;
   color: #ffd0d0;
   background: #492b36;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ms-error .material-symbols-outlined {
+  flex: 0 0 18px;
+  margin-top: 1px;
 }
 
 @media (max-width: 1200px) {

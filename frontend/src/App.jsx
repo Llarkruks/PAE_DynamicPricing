@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -20,13 +20,26 @@ import "./App.css";
 
 export default function App() {
   const [user, setUser] = useState(undefined);
+  const [authError, setAuthError] = useState("");
 
   useEffect(() => {
-    loadCurrentUser().then(setUser);
+    loadCurrentUser()
+      .then(setUser)
+      .catch(() => {
+        setAuthError("No se pudo conectar con el backend. Comprueba que esté iniciado.");
+        setUser(null);
+      });
   }, []);
 
-  if (user === undefined) return null;
-  if (!user) return <Auth onAuthenticated={setUser} />;
+  if (user === undefined) {
+    return (
+      <main className="app-loading">
+        <span className="material-symbols-outlined">hourglass_top</span>
+        <p>Cargando STADIUM IQ...</p>
+      </main>
+    );
+  }
+  if (!user) return <Auth onAuthenticated={setUser} initialError={authError} />;
 
   return (
     <BrowserRouter>

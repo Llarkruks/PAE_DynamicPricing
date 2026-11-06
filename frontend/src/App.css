@@ -42,6 +42,24 @@ button:disabled {
     #0c1220;
 }
 
+.app-loading {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  color: #aebfe0;
+  background: #0c1220;
+}
+.app-loading .material-symbols-outlined {
+  color: #b3a3ff;
+  font-size: 30px;
+}
+.app-loading p {
+  margin: 0;
+  font-size: 13px;
+}
+
 /* ========================================
    SIDEBAR
 ======================================== */

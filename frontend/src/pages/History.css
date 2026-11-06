@@ -19,6 +19,15 @@
   gap: 20px;
   align-items: start;
 }
+.history-action-error {
+  grid-column: 1 / -1;
+  padding: 10px 13px;
+  border: 1px solid #8e526d;
+  border-radius: 8px;
+  background: #291d2c;
+  color: #f0b5c8;
+  font-size: 12px;
+}
 
 .history-events,
 .history-detail,

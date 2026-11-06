@@ -1,8 +1,5 @@
 
-import React, {
-  useEffect,
-  useState
-} from "react";
+import { useEffect, useState } from "react";
 
 import axios from "axios";
 import { API, authHeaders } from "../auth";
@@ -89,7 +86,7 @@ function Card({ title, value, detail }) {
 
 export default function Multisport() {
   const [sport, setSport] = useState("");
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState("");
   const [model, setModel] = useState("rate");
   const [chart, setChart] = useState("revenue");
 
@@ -108,6 +105,7 @@ export default function Multisport() {
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState("");
   const [savedEvents, setSavedEvents] = useState([]);
+  const [configLoading, setConfigLoading] = useState(true);
 
   const currentSavedEvent = savedEvents.find(
     event => event.id === selectedEventId
@@ -122,7 +120,9 @@ export default function Multisport() {
   function resetEventForm() {
     setEventName("");
     setSport("");
+    setCustomCategory("");
     setCustom(emptyCustom());
+    setDays("");
     setSelectedEventId("");
     setEventMode("new");
     setSetupStep(1);
@@ -136,11 +136,11 @@ export default function Multisport() {
     setEventMode("existing");
     setEventName(event.eventName);
     setSport(event.sport);
-    setCustomCategory(event.ticketCategory);
-    setDays(event.days);
-    setModel(event.model);
-    setCustom({ ...emptyCustom(), ...event.custom });
-    setResult(event.lastResult || null);
+    setCustomCategory("");
+    setDays("");
+    setModel("rate");
+    setCustom(emptyCustom());
+    setResult(null);
     setSetupStep(1);
     setError("");
     setSavedFeedback(false);
@@ -153,10 +153,10 @@ export default function Multisport() {
     const id = selectedEventId ||
       (typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
-        : `event-${Date.now()}`);
+        : `event-${savedEvents.length + 1}`);
     const previous = savedEvents.find(event => event.id === id);
     const historyEntry = {
-      id: `${id}-${Date.now()}`,
+      id: `${id}-${now}`,
       createdAt: now,
       ticketCategory: activeCustomCategory,
       recommendedPrice: result.optimal?.price ?? null,
@@ -206,18 +206,50 @@ export default function Multisport() {
     const popularity = Number(custom.popularity_index);
     const importance = Number(custom.event_importance);
 
-    if (!sport || !eventName.trim() || !activeCustomCategory ||
-        !Number.isInteger(capacity) || capacity <= 0 ||
-        !Number.isInteger(remaining) || remaining < 0 ||
-        remaining > capacity ||
-        custom.reference_price === "" ||
-        custom.current_price === "" ||
-        custom.popularity_index === "" ||
-        custom.event_importance === "" ||
-        !Number.isFinite(referencePrice) || referencePrice <= 0 ||
-        !Number.isFinite(currentPrice) || currentPrice <= 0 ||
-        !Number.isFinite(popularity) || !Number.isFinite(importance)) {
-      setError("Completa todos los datos generales antes de continuar.");
+    if (!sport) {
+      setError("Selecciona un deporte para continuar.");
+      return;
+    }
+    if (!eventName.trim()) {
+      setError("Escribe un nombre para el evento.");
+      return;
+    }
+    if (!activeCustomCategory) {
+      setError("Selecciona un tipo de entrada.");
+      return;
+    }
+    if (!days) {
+      setError("Indica cuántos días faltan para el evento.");
+      return;
+    }
+    if (!Number.isInteger(capacity) || capacity <= 0) {
+      setError("Indica un aforo válido mayor que cero.");
+      return;
+    }
+    if (!Number.isInteger(remaining) || remaining < 0) {
+      setError("Indica cuántas entradas quedan disponibles.");
+      return;
+    }
+    if (remaining > capacity) {
+      setError("Las entradas disponibles no pueden superar el aforo.");
+      return;
+    }
+    if (custom.reference_price === "" || !Number.isFinite(referencePrice) ||
+        referencePrice <= 0) {
+      setError("Indica un precio de referencia válido.");
+      return;
+    }
+    if (custom.current_price === "" || !Number.isFinite(currentPrice) ||
+        currentPrice <= 0) {
+      setError("Indica un precio actual válido.");
+      return;
+    }
+    if (custom.popularity_index === "" || !Number.isFinite(popularity)) {
+      setError("Selecciona la popularidad esperada.");
+      return;
+    }
+    if (custom.event_importance === "" || !Number.isFinite(importance)) {
+      setError("Selecciona la importancia del evento.");
       return;
     }
 
@@ -235,18 +267,17 @@ export default function Multisport() {
   useEffect(() => {
     axios.get(`${API}/api/v7/custom/config`)
       .then(response => setCustomCategories(response.data.categories || []))
-      .catch(() => {});
+      .catch(() => setError(
+        "No se pudo cargar la configuración de entradas. Comprueba que el backend esté activo."
+      ))
+      .finally(() => setConfigLoading(false));
   }, []);
 
   const availableCustomCategories = customCategories
     .filter(x => x.sport_type === sport)
     .map(x => x.ticket_category);
   const activeCustomCategory = availableCustomCategories.includes(customCategory)
-    ? customCategory : availableCustomCategories[0] || "";
-
-  useEffect(() => {
-    setResult(null);
-  }, [sport, days, activeCustomCategory, model]);
+    ? customCategory : "";
 
   async function calculate(e) {
     e.preventDefault();
@@ -255,25 +286,39 @@ export default function Multisport() {
     const remaining = Number(custom.remaining_capacity);
     const currentPrice = Number(custom.current_price);
 
-    if (!activeCustomCategory ||
-        !Number.isFinite(capacity) ||
-        capacity <= 0 ||
-        !Number.isInteger(capacity) ||
-        !Number.isFinite(remaining) ||
-        !Number.isInteger(remaining) ||
-        remaining < 0 ||
-        remaining > capacity ||
-        !Number.isFinite(currentPrice) ||
-        currentPrice <= 0 ||
-        !eventName.trim()) {
-      setError("Revisa el nombre, precio, aforo y entradas disponibles.");
+    if (!eventName.trim()) {
+      setError("Escribe un nombre para el evento.");
+      return;
+    }
+    if (!activeCustomCategory) {
+      setError("Selecciona un tipo de entrada.");
+      return;
+    }
+    if (!days) {
+      setError("Indica cuántos días faltan para el evento.");
+      return;
+    }
+    if (!Number.isFinite(capacity) || capacity <= 0 || !Number.isInteger(capacity)) {
+      setError("Indica un aforo válido mayor que cero.");
+      return;
+    }
+    if (!Number.isFinite(remaining) || !Number.isInteger(remaining) || remaining < 0) {
+      setError("Indica cuántas entradas quedan disponibles.");
+      return;
+    }
+    if (remaining > capacity) {
+      setError("Las entradas disponibles no pueden superar el aforo.");
+      return;
+    }
+    if (!Number.isFinite(currentPrice) || currentPrice <= 0) {
+      setError("Indica un precio actual válido.");
       return;
     }
 
     const referencePrice = Number(custom.reference_price);
     if (custom.reference_price === "" || !Number.isFinite(referencePrice) ||
         referencePrice <= 0 || referencePrice > 10000) {
-      setError("Introduce un precio de referencia valido.");
+      setError("Introduce un precio de referencia válido entre 0,01 € y 10.000 €.");
       return;
     }
 
@@ -281,7 +326,7 @@ export default function Multisport() {
     const importance = Number(custom.event_importance);
     if (!Number.isFinite(popularity) || popularity < 0 || popularity > 1 ||
         !Number.isFinite(importance) || importance < 0 || importance > 1) {
-      setError("Introduce la popularidad y la importancia del evento.");
+      setError("Selecciona una popularidad y una importancia válidas.");
       return;
     }
 
@@ -334,7 +379,6 @@ export default function Multisport() {
   const optimal = result?.optimal;
   const reference = result?.reference;
 
-  const uplift = result?.uplift_percent;
   const diff = ok
     ? optimal.revenue - reference.revenue
     : 0;
@@ -432,8 +476,10 @@ export default function Multisport() {
                   }
                   onClick={() => {
                     setSport(id);
+                    setCustomCategory("");
                     setCustom(emptyCustom());
                     setError("");
+                    setResult(null);
                   }}
                 >
                   <Icon name={icon} size={26} />
@@ -457,27 +503,31 @@ export default function Multisport() {
 
             <div className="ms-divider" />
 
-            <label className="ms-label">Nombre del evento</label>
+            {eventMode === "new" && (
+              <>
+                <label className="ms-label">Nombre del evento</label>
 
-            <input
-              className="ms-text-field"
-              type="text"
-              maxLength={100}
-              required
-              value={eventName}
-              onChange={e => {
-                setEventName(e.target.value);
-                setResult(null);
-              }}
-              placeholder="Ej. Final del torneo de mi ciudad"
-            />
+                <input
+                  className="ms-text-field"
+                  type="text"
+                  maxLength={100}
+                  required
+                  value={eventName}
+                  onChange={e => {
+                    setEventName(e.target.value);
+                    setResult(null);
+                  }}
+                  placeholder="Ej. Final del torneo de mi ciudad"
+                />
+              </>
+            )}
 
             <label className="ms-label">Tipo de entrada</label>
 
             <select
               required
               value={activeCustomCategory}
-              disabled={!sport || !availableCustomCategories.length}
+              disabled={configLoading || !sport || !availableCustomCategories.length}
               onChange={e => {
                 setCustomCategory(e.target.value);
                 setCustom(emptyCustom());
@@ -485,10 +535,16 @@ export default function Multisport() {
                 setResult(null);
               }}
             >
-              {!sport && (
+              {configLoading && (
+                <option value="">Cargando tipos de entrada...</option>
+              )}
+              {!configLoading && !sport && (
                 <option value="">Selecciona primero un deporte</option>
               )}
-              {sport && !availableCustomCategories.length && (
+              {!configLoading && sport && !activeCustomCategory && (
+                <option value="">Selecciona el tipo de entrada</option>
+              )}
+              {!configLoading && sport && !availableCustomCategories.length && (
                 <option value="">No hay tipos de entrada disponibles</option>
               )}
               {availableCustomCategories.map(c => (
@@ -510,7 +566,7 @@ export default function Multisport() {
 
             <div className="ms-slider-title">
               <span>Días restantes</span>
-              <strong>{days} días</strong>
+              <strong>{days ? `${days} días` : "Selecciona los días"}</strong>
             </div>
 
             <input
@@ -518,7 +574,10 @@ export default function Multisport() {
               min={1}
               max={30}
               value={days}
-              onChange={e => setDays(Number(e.target.value))}
+              onChange={e => {
+                setDays(Number(e.target.value));
+                setResult(null);
+              }}
             />
 
             <div className="ms-range-labels">
@@ -656,7 +715,10 @@ export default function Multisport() {
 
                 <select
                   value={model}
-                  onChange={e => setModel(e.target.value)}
+                  onChange={e => {
+                    setModel(e.target.value);
+                    setResult(null);
+                  }}
                 >
                   <option value="rate">
                     Tasa de venta
@@ -703,9 +765,9 @@ export default function Multisport() {
 
         <section className="ms-results">
           {error && (
-            <div className="ms-panel ms-error">
-              <Icon name="error_outline" />
-              {error}
+            <div className="ms-panel ms-error" role="alert">
+              <Icon name="error_outline" size={18} />
+              <span>{error}</span>
             </div>
           )}
 

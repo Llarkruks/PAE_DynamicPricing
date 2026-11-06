@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 
 import {
@@ -230,7 +230,9 @@ export default function Simulator() {
   });
 
   const latestSignature = useRef(scenarioSignature);
-  latestSignature.current = scenarioSignature;
+  useEffect(() => {
+    latestSignature.current = scenarioSignature;
+  }, [scenarioSignature]);
 
   const isOutdated =
     results !== null &&

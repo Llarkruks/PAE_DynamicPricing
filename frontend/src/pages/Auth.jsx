@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { authenticate } from "../auth";
 import "./Auth.css";
 
-export default function Auth({ onAuthenticated }) {
+export default function Auth({ onAuthenticated, initialError = "" }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
 
   async function submit(event) {
@@ -22,7 +22,14 @@ export default function Auth({ onAuthenticated }) {
       onAuthenticated(user);
     } catch (requestError) {
       const detail = requestError.response?.data?.detail;
-      setError(Array.isArray(detail) ? "La contraseña debe tener al menos 6 caracteres." : detail || "No se pudo completar la operación.");
+      setError(
+        Array.isArray(detail)
+          ? "La contraseña debe tener al menos 6 caracteres."
+          : detail ||
+            (!requestError.response
+              ? "No se pudo conectar con el backend. Comprueba que esté iniciado."
+              : "No se pudo completar la operación.")
+      );
     } finally {
       setLoading(false);
     }

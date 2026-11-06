@@ -129,9 +129,14 @@ def password_hash(password):
 
 
 def password_matches(password, encoded):
-    salt_hex, digest_hex = encoded.split(":", 1)
+    try:
+        salt_hex, digest_hex = encoded.split(":", 1)
+        salt = bytes.fromhex(salt_hex)
+        bytes.fromhex(digest_hex)
+    except (ValueError, TypeError):
+        return False
     digest = hashlib.pbkdf2_hmac(
-        "sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), 200_000
+        "sha256", password.encode("utf-8"), salt, 200_000
     )
     return hmac.compare_digest(digest.hex(), digest_hex)
 

@@ -23,9 +23,12 @@ export async function loadCurrentUser() {
       headers: authHeaders()
     });
     return response.data;
-  } catch {
-    localStorage.removeItem(TOKEN_KEY);
-    return null;
+  } catch (error) {
+    if (error.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY);
+      return null;
+    }
+    throw error;
   }
 }
 

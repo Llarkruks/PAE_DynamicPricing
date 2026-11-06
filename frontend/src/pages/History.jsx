@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { API, authHeaders } from "../auth";
 
@@ -40,6 +40,8 @@ const categoryName = value => ({
 export default function History() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
   const [selectedId, setSelectedId] = useState("");
   const [expandedEntryId, setExpandedEntryId] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
@@ -48,6 +50,7 @@ export default function History() {
   useEffect(() => {
     axios.get(`${API}/api/v7/events`, { headers: authHeaders() })
       .then(response => setEvents(response.data))
+      .catch(() => setError("No se pudo cargar tu historial. Comprueba la conexión con el backend."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -56,13 +59,16 @@ export default function History() {
       return;
     }
 
+    setActionLoading(true);
     axios.delete(`${API}/api/v7/events/${selected.id}`, { headers: authHeaders() })
       .then(() => {
         setEvents(events.filter(event => event.id !== selected.id));
         setSelectedId("");
         setExpandedEntryId("");
         setConfirmAction(null);
-      });
+      })
+      .catch(() => setError("No se pudo borrar el evento. Inténtalo de nuevo."))
+      .finally(() => setActionLoading(false));
   }
 
   function deleteEntry(entryId) {
@@ -75,6 +81,7 @@ export default function History() {
         ? { ...event, history: (event.history || []).filter(entry => entry.id !== entryId) }
         : event
     ));
+    setActionLoading(true);
     axios.put(`${API}/api/v7/events/${selected.id}`, {
       id: selected.id,
       payload: nextEvents.find(event => event.id === selected.id)
@@ -82,7 +89,8 @@ export default function History() {
       setEvents(nextEvents);
       setExpandedEntryId("");
       setConfirmAction(null);
-    });
+    }).catch(() => setError("No se pudo borrar el cálculo. Inténtalo de nuevo."))
+      .finally(() => setActionLoading(false));
   }
 
   const getCharacteristics = (custom, ticketCategory) => [
@@ -113,6 +121,12 @@ export default function History() {
 
       {loading ? (
         <section className="history-empty"><h2>Cargando historial...</h2></section>
+      ) : error ? (
+        <section className="history-empty">
+          <span className="material-symbols-outlined">error_outline</span>
+          <h2>No se pudo cargar el historial</h2>
+          <p>{error}</p>
+        </section>
       ) : !events.length ? (
         <section className="history-empty">
           <span className="material-symbols-outlined">history</span>
@@ -121,6 +135,7 @@ export default function History() {
         </section>
       ) : (
         <div className="history-layout">
+          {error && <div className="history-action-error" role="alert">{error}</div>}
           <aside className="history-events">
             <h2>Mis eventos</h2>
             {events.map(event => (
@@ -159,6 +174,7 @@ export default function History() {
                     title: "¿Borrar este evento?",
                     message: `Se eliminará "${selected.eventName}" y todo su historial.`
                   })}
+                  disabled={actionLoading}
                 >
                   <span className="material-symbols-outlined">delete</span>
                   Borrar evento
@@ -201,6 +217,7 @@ export default function History() {
                           title: "¿Borrar este cálculo?",
                           message: "Esta recomendación se eliminará del historial del evento."
                         })}
+                        disabled={actionLoading}
                       >
                         <span className="material-symbols-outlined">delete</span>
                       </button>
@@ -252,6 +269,7 @@ export default function History() {
               <button
                 type="button"
                 className="history-modal-confirm"
+                disabled={actionLoading}
                 onClick={() => confirmAction.type === "event"
                   ? deleteEvent()
                   : deleteEntry(confirmAction.entryId)}
