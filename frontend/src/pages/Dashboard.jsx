@@ -9,7 +9,7 @@ const sections = [
     tag: "PREDICCIÓN Y OPTIMIZACIÓN",
     title: "Simulador de precios",
     description:
-      "Configura un evento deportivo, consulta la demanda estimada mediante XGBoost y descubre el precio que maximiza los ingresos previstos del siguiente día comercial.",
+      "Configura un evento y recibe una recomendación de precio basada en la demanda estimada.",
     path: "/multisport",
     action: "Abrir simulador",
     main: true
@@ -19,18 +19,18 @@ const sections = [
     tag: "EVALUACIÓN EXPERIMENTAL",
     title: "Resultados y validación",
     description:
-      "Analiza los resultados de las simulaciones, compara las estrategias de precio fijo y dinámico y consulta su comportamiento por deporte.",
+      "Compara estrategias de precio y consulta el comportamiento de las simulaciones.",
     path: "/validation",
     action: "Ver resultados"
   },
   {
-    icon: "sports_soccer",
-    tag: "PRIMER PROTOTIPO",
-    title: "Simulador original",
+    icon: "history",
+    tag: "SEGUIMIENTO",
+    title: "Historial de eventos",
     description:
-      "Accede al prototipo inicial orientado al fútbol. Se conserva para mostrar la evolución del desarrollo y comparar los enfoques.",
-    path: "/simulator",
-    action: "Abrir prototipo"
+      "Guarda tus eventos y revisa las recomendaciones calculadas.",
+    path: "/history",
+    action: "Ver historial"
   }
 ];
 
@@ -49,10 +49,8 @@ export default function Dashboard() {
         </h1>
 
         <p>
-          STADIUM IQ es una plataforma experimental
-          que combina inteligencia artificial y
-          optimización para analizar la demanda
-          de entradas deportivas y recomendar precios.
+          Una herramienta para analizar la demanda de entradas
+          deportivas y tomar mejores decisiones de precio.
         </p>
 
         <div className="dashboard-hero-actions">
@@ -70,7 +68,7 @@ export default function Dashboard() {
             to="/validation"
             className="dashboard-secondary-button"
           >
-            Explorar resultados
+            Ver resultados
           </Link>
         </div>
       </header>
@@ -116,69 +114,6 @@ export default function Dashboard() {
           ))}
         </div>
       </section>
-
-      <section className="dashboard-section">
-        <div className="dashboard-section-heading">
-          <div>
-            <span>METODOLOGÍA</span>
-            <h2>¿Cómo funciona?</h2>
-          </div>
-        </div>
-
-        <div className="dashboard-process">
-          <div className="dashboard-process-step">
-            <div className="dashboard-step-number">01</div>
-
-            <h3>Datos</h3>
-            <p>
-              Características del evento, precios,
-              inventario y ventas sintéticas.
-            </p>
-          </div>
-
-          <div className="dashboard-process-step">
-            <div className="dashboard-step-number">02</div>
-
-            <h3>Predicción</h3>
-            <p>
-              XGBoost estima la demanda esperada
-              bajo diferentes precios.
-            </p>
-          </div>
-
-          <div className="dashboard-process-step">
-            <div className="dashboard-step-number">03</div>
-
-            <h3>Optimización</h3>
-            <p>
-              El sistema compara los ingresos previstos
-              y recomienda un precio.
-            </p>
-          </div>
-
-          <div className="dashboard-process-step">
-            <div className="dashboard-step-number">04</div>
-
-            <h3>Validación</h3>
-            <p>
-              Las políticas de precios se comparan
-              mediante un simulador sintético de demanda.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <footer className="dashboard-disclaimer">
-        <span className="material-symbols-outlined">
-          info
-        </span>
-
-        <p>
-          Proyecto académico basado en datos sintéticos.
-          Las recomendaciones y mejoras calculadas
-          no constituyen resultados comerciales reales.
-        </p>
-      </footer>
 
     </main>
   );

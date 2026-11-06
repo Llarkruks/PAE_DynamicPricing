@@ -31,7 +31,8 @@ NUMERIC = [
     "category_capacity", "base_price", "is_premium_experience",
     "hospitality_included", "total_capacity", "remaining_capacity",
     "cumulative_sales", "sales_last_period", "occupancy_rate",
-    "current_price", "league_position_home", "league_position_away",
+    "current_price", "price_vs_base",
+    "league_position_home", "league_position_away",
     "derby_rivalry_index", "team_win_percentage", "player_ranking",
     "race_distance_km", "elevation_gain_m",
 ]
@@ -98,7 +99,9 @@ def encode_features(df, columns=None):
 def build_model(columns, n_estimators=350):
     # El precio tiene una restricción monótona negativa.
     constraints = {
-        name: -1 for name in columns if name == "current_price"
+        name: -1
+        for name in columns
+        if name in {"current_price", "price_vs_base"}
     }
 
     return XGBRegressor(

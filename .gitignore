@@ -76,3 +76,6 @@ __pycache__/
 # Resultados definitivos de validación
 !frontend/public/validation/v8_2_detalle.csv
 !frontend/public/validation/v8_2_repeticiones.csv
+
+stadium_iq.db
+*.db

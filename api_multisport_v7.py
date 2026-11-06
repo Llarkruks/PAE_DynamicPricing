@@ -2,13 +2,20 @@
 """STADIUM IQ V7.6 - API de optimizacion multideporte."""
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+import hashlib
+import hmac
+import json
+from pathlib import Path
+import secrets
+import sqlite3
 from typing import Literal
 
 import joblib
 import numpy as np
 import pandas as pd
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from config_deportes import variables_deporte
@@ -22,6 +29,7 @@ from multisport_v7 import (
 
 DATA = None
 BUNDLE = None
+AUTH_DB = Path(__file__).with_name("stadium_iq.db")
 
 EPSILON = 1e-6
 
@@ -30,6 +38,7 @@ EPSILON = 1e-6
 async def lifespan(app: FastAPI):
     global DATA, BUNDLE
 
+    init_auth_db()
     if not ARTIFACT.exists():
         raise RuntimeError(
             "Primero ejecuta: python multisport_v7.py train"
@@ -52,9 +61,203 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
     ],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+
+def get_db():
+    connection = sqlite3.connect(AUTH_DB)
+    connection.row_factory = sqlite3.Row
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS saved_events (
+            id TEXT NOT NULL,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            payload TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (id, user_id)
+        );
+        """
+    )
+    return connection
+
+
+def init_auth_db():
+    with get_db() as connection:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS sessions (
+                token TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS saved_events (
+                id TEXT NOT NULL,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                payload TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                PRIMARY KEY (id, user_id)
+            );
+            """
+        )
+
+
+def password_hash(password):
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, 200_000
+    )
+    return f"{salt.hex()}:{digest.hex()}"
+
+
+def password_matches(password, encoded):
+    salt_hex, digest_hex = encoded.split(":", 1)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), 200_000
+    )
+    return hmac.compare_digest(digest.hex(), digest_hex)
+
+
+def now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def current_user(authorization: str | None = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(401, "Inicia sesión para continuar.")
+    token = authorization[7:].strip()
+    with get_db() as connection:
+        row = connection.execute(
+            "SELECT users.id, users.email FROM sessions "
+            "JOIN users ON users.id = sessions.user_id WHERE sessions.token = ?",
+            (token,),
+        ).fetchone()
+    if row is None:
+        raise HTTPException(401, "La sesión ha caducado. Inicia sesión de nuevo.")
+    return row
+
+
+class AuthCredentials(BaseModel):
+    email: str = Field(min_length=3, max_length=160)
+    password: str = Field(min_length=1, max_length=128)
+
+
+class RegisterCredentials(AuthCredentials):
+    password: str = Field(min_length=6, max_length=128)
+
+
+class EventPayload(BaseModel):
+    id: str = Field(min_length=1, max_length=100)
+    payload: dict
+
+
+@app.on_event("startup")
+def startup_auth_db():
+    init_auth_db()
+
+
+@app.post("/api/v7/auth/register")
+def register(credentials: RegisterCredentials):
+    email = credentials.email.strip().lower()
+    try:
+        with get_db() as connection:
+            cursor = connection.execute(
+                "INSERT INTO users (email, password_hash, created_at) VALUES (?, ?, ?)",
+                (email, password_hash(credentials.password), now_iso()),
+            )
+            user_id = cursor.lastrowid
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, "Ya existe una cuenta con ese email.")
+    return create_session(user_id, email)
+
+
+@app.post("/api/v7/auth/login")
+def login(credentials: AuthCredentials):
+    with get_db() as connection:
+        row = connection.execute(
+            "SELECT id, email, password_hash FROM users WHERE email = ?",
+            (credentials.email.strip().lower(),),
+        ).fetchone()
+    if row is None or not password_matches(credentials.password, row["password_hash"]):
+        raise HTTPException(401, "Email o contraseña incorrectos.")
+    return create_session(row["id"], row["email"])
+
+
+def create_session(user_id, email):
+    token = secrets.token_urlsafe(32)
+    with get_db() as connection:
+        connection.execute(
+            "INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)",
+            (token, user_id, now_iso()),
+        )
+    return {"token": token, "user": {"id": user_id, "email": email}}
+
+
+@app.get("/api/v7/auth/me")
+def me(user=Depends(current_user)):
+    return {"id": user["id"], "email": user["email"]}
+
+
+@app.post("/api/v7/auth/logout")
+def logout(authorization: str | None = Header(default=None)):
+    if authorization and authorization.startswith("Bearer "):
+        with get_db() as connection:
+            connection.execute(
+                "DELETE FROM sessions WHERE token = ?", (authorization[7:].strip(),)
+            )
+    return {"ok": True}
+
+
+@app.get("/api/v7/events")
+def list_events(user=Depends(current_user)):
+    with get_db() as connection:
+        rows = connection.execute(
+            "SELECT payload FROM saved_events WHERE user_id = ? ORDER BY updated_at DESC",
+            (user["id"],),
+        ).fetchall()
+    return [json.loads(row["payload"]) for row in rows]
+
+
+@app.put("/api/v7/events/{event_id}")
+def save_event(event_id: str, event: EventPayload, user=Depends(current_user)):
+    if event_id != event.id:
+        raise HTTPException(400, "El identificador del evento no coincide.")
+    with get_db() as connection:
+        connection.execute(
+            "INSERT INTO saved_events (id, user_id, payload, updated_at) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(id, user_id) DO UPDATE SET payload = excluded.payload, "
+            "updated_at = excluded.updated_at",
+            (event.id, user["id"], json.dumps(event.payload), now_iso()),
+        )
+    return event.payload
+
+
+@app.delete("/api/v7/events/{event_id}")
+def delete_event(event_id: str, user=Depends(current_user)):
+    with get_db() as connection:
+        connection.execute(
+            "DELETE FROM saved_events WHERE id = ? AND user_id = ?",
+            (event_id, user["id"]),
+        )
+    return {"ok": True}
 
 
 class CustomPrediction(BaseModel):
@@ -169,6 +372,13 @@ def evaluate_prices(row, model_name, prices):
     )
 
     scenarios["current_price"] = prices
+    scenarios["candidate_price"] = prices
+    scenarios["price_vs_base"] = (
+        prices / float(row["base_price"]) - 1
+    )
+    scenarios["discount_active"] = (
+        prices < float(row["base_price"])
+    ).astype(int)
 
     x = encode_features(
         scenarios,
@@ -607,7 +817,13 @@ def optimize_custom(req: CustomPrediction):
     if "sales_velocity" in row.index:
         row["sales_velocity"] = 0
     if "price_vs_base" in row.index:
-        row["price_vs_base"] = 1.0
+        row["price_vs_base"] = (
+            req.current_price / reference_price - 1
+        )
+    if "discount_active" in row.index:
+        row["discount_active"] = int(
+            req.current_price < reference_price
+        )
     output = optimize_row(row, req.model, extra_context={
         "is_custom": True,
         "event_name": req.event_name.strip() or "Mi evento",

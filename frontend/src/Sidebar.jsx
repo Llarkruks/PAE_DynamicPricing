@@ -15,18 +15,23 @@ const navigation = [
     label: "Simulador multideporte"
   },
   {
-    path: "/simulator",
-    icon: "sports_soccer",
-    label: "Simulador original"
+    path: "/history",
+    icon: "history",
+    label: "Historial de eventos"
   },
   {
     path: "/validation",
     icon: "monitoring",
     label: "Resultados y validación"
+  },
+  {
+    path: "/simulator",
+    icon: "sports_soccer",
+    label: "Simulador original"
   }
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ user, onLogout }) {
   return (
     <aside className="stadium-sidebar">
 
@@ -68,19 +73,13 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-bottom">
-        <div className="status-dot">
-          <span />
-          Plataforma de simulación
+        <div className="sidebar-user">
+          <span className="material-symbols-outlined">account_circle</span>
+          <span>{user.email}</span>
+          <button type="button" onClick={onLogout} aria-label="Cerrar sesión" title="Cerrar sesión">
+            <span className="material-symbols-outlined">logout</span>
+          </button>
         </div>
-
-        <p>
-          Sistema experimental de predicción
-          de demanda y optimización de precios.
-        </p>
-
-        <small>
-          Smart Stadium Pricing · Proyecto PAE
-        </small>
       </div>
     </aside>
   );

@@ -70,6 +70,103 @@
   margin: 18px 0 10px;
 }
 
+.ms-form > h2 {
+  margin-bottom: 18px;
+}
+
+.ms-step-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 16px 0 24px;
+}
+
+.ms-step-number {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  border-radius: 50%;
+  background: #393060;
+  color: #d7ceff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ms-step-heading strong,
+.ms-step-heading small {
+  display: block;
+}
+
+.ms-step-heading strong {
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.ms-step-heading small {
+  color: #8299c2;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.ms-next-step,
+.ms-back-step {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #aa9bff;
+  border-radius: 9px;
+  padding: 11px;
+  margin-top: 20px;
+  background: #312b53;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ms-back-step {
+  border-color: #425171;
+  background: #222d45;
+  color: #c0d1ef;
+}
+
+.ms-form .ms-divider {
+  margin: 18px 0;
+}
+
+.ms-details-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 11px 12px;
+  border: 1px solid #425171;
+  border-radius: 9px;
+  background: #202b43;
+  color: #d7e2fb;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: left;
+}
+
+.ms-details-toggle span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ms-event-details {
+  margin-top: 8px;
+  padding: 0 12px 2px;
+  border-left: 2px solid #393060;
+}
+
 .ms-sports {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -95,6 +192,114 @@
   background: #312b53;
   border-color: #aa9bff;
   color: #ffffff;
+}
+
+.ms-locked-sport {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px;
+  border: 1px solid #aa9bff;
+  border-radius: 9px;
+  background: #312b53;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ms-locked-sport small {
+  margin-left: auto;
+  color: #c4baff;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.ms-event-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.ms-event-actions button,
+.ms-save-event {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #425171;
+  border-radius: 8px;
+  background: #222d45;
+  color: #c0d1ef;
+  padding: 10px 7px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.ms-event-actions button.active,
+.ms-save-event {
+  background: #312b53;
+  border-color: #aa9bff;
+  color: #ffffff;
+}
+
+.ms-save-event.saved {
+  background: #214f43;
+  border-color: #69d6ae;
+  color: #dffff3;
+}
+
+.ms-event-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.ms-event-select {
+  margin-top: 12px;
+}
+
+.ms-save-event {
+  margin-top: 18px;
+  width: 100%;
+}
+
+.ms-history h2 {
+  margin: 8px 0 16px;
+  font-size: 17px;
+}
+
+.ms-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ms-history-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 11px 13px;
+  border: 1px solid #35415e;
+  border-radius: 9px;
+  background: #202b43;
+  font-size: 12px;
+}
+
+.ms-history-row strong {
+  color: #ffffff;
+  display: block;
+}
+
+.ms-history-row small {
+  display: block;
+  color: #8299c2;
+  margin-top: 4px;
+}
+
+.ms-history-row > span {
+  color: #aebfe0;
+  text-align: right;
 }
 
 .ms-form select {
@@ -485,8 +690,11 @@
   border-radius:8px;padding:10px 5px;cursor:pointer;font-size:12px;}
 .ms-mode-picker button.active {background:#393060;border-color:#b3a0ff;color:white;}
 .ms-custom-fields {display:flex;flex-direction:column;gap:9px;}
-.ms-custom-fields input[type=number] {background:#222e47;border:1px solid #465775;color:#fff;
+.ms-form input[type=number] {background:#222e47;border:1px solid #465775;color:#fff;
   border-radius:7px;padding:10px;width:100%;box-sizing:border-box;}
+.ms-form input[type=number]::placeholder {color:#8290ad;opacity:1;}
+.ms-form input[type=number]::-webkit-inner-spin-button,
+.ms-form input[type=number]::-webkit-outer-spin-button {opacity:.75;filter:invert(78%) sepia(18%) saturate(600%) hue-rotate(184deg);}
 .ms-assumptions {background:rgba(139,124,246,.09);border:1px solid #5b537e;
   border-radius:10px;padding:10px 15px;margin:18px 0;}
 .ms-assumptions li {margin:7px 0;line-height:1.4;}
